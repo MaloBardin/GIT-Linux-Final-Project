@@ -42,13 +42,15 @@ def GetReturnSinceLookBack(df,lookback_days):
     return (df.iloc[latest_index,1:]-df.iloc[morning_index,1:])/df.iloc[morning_index,1:]*100
 
 
-returns_today=GetReturnSinceLookBack(df,0)
-returns_7days=GetReturnSinceLookBack(df,7)
-returns_30days=GetReturnSinceLookBack(df,30)
 
-print("Returns today:")
-print(returns_today)
-print("Returns last 7 days:")
-print(returns_7days)
-print("Returns last 30 days:")
-print(returns_30days)
+def GetDfForDashboard(df):
+    df_dashboard=pd.DataFrame()
+    df_dashboard["Ticker"]=df.columns[1:]
+    df_dashboard["Price"]=df.iloc[-1,1:].values
+    df_dashboard["Return_1d"]=GetReturnSinceLookBack(df,1).values
+    df_dashboard["Return_7d"]=GetReturnSinceLookBack(df,7).values
+    df_dashboard["Return_30d"]=GetReturnSinceLookBack(df,30).values
+    return df_dashboard
+
+df_dash=GetDfForDashboard(df)
+print(df_dash)
