@@ -27,6 +27,49 @@ df=ReadDf()
 def Dfcleaning(df):
     df=df.fillna(method='ffill')
     df["Datetime"]=pd.to_datetime(df['Datetime'])
+
+    name_map = {
+        'AI.PA': 'Air Liquide',
+        'AIR.PA': 'Airbus',
+        'ALO.PA': 'Alstom',
+        'ATO.PA': 'Atos',
+        'BN.PA': 'Danone',
+        'BNP.PA': 'BNP Paribas',
+        'CA.PA': 'Crédit Agricole',
+        'CAP.PA': 'Capgemini',
+        'CS.PA': 'AXA',
+        'DG.PA': 'Vinci',
+        'DSY.PA': 'Dassault Systèmes',
+        'EL.PA': 'EssilorLuxottica',
+        'EN.PA': 'Bouygues',
+        'ENGI.PA': 'Engie',
+        'ERF.PA': 'Eurofins Scientific',
+        'GLE.PA': 'Société Générale',
+        'HO.PA': 'Thales',
+        'KER.PA': 'Kering',
+        'LR.PA': 'Legrand',
+        'MC.PA': 'LVMH',
+        'ML.PA': 'Michelin',
+        'OR.PA': "L'Oréal",
+        'ORA.PA': 'Orange',
+        'PUB.PA': 'Publicis',
+        'RCO.PA': 'Rémy Cointreau',
+        'RI.PA': 'Pernod Ricard',
+        'RMS.PA': 'Hermès',
+        'SAF.PA': 'Safran',
+        'SAN.PA': 'Sanofi',
+        'SGO.PA': 'Saint-Gobain',
+        'STMPA.PA': 'STMicroelectronics',
+        'SU.PA': 'Schneider Electric',
+        'TEP.PA': 'Téléperformance',
+        'TTE.PA': 'TotalEnergies',
+        'URW.PA': 'UR-Westfield',
+        'VIE.PA': 'Veolia',
+        'VIV.PA': 'Vivendi',
+        'WLN.PA': 'Worldline'
+    }
+    df = df.rename(columns=name_map)
+
     return df
 
 df=Dfcleaning(df)
@@ -52,5 +95,13 @@ def GetDfForDashboard(df):
     df_dashboard["Return_30d"]=GetReturnSinceLookBack(df,30).values
     return df_dashboard
 
-df_dash=GetDfForDashboard(df)
+df_dash=GetDfForDashboard(Dfcleaning(ReadDf()))
 print(df_dash)
+
+
+
+def getInfoperTicker(ticker):
+    longtimedata=df[ticker]
+    print(longtimedata)
+
+
