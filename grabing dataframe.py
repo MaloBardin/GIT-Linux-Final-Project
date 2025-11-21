@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+from datetime import datetime
 
 
 def GetDf():
@@ -19,70 +19,78 @@ def GetDf():
     df = yf.download(cac40, period='3y', interval='1d')[['Close', 'Volume']]
 
 
+
+
 def ReadDf():
     df = pd.read_csv('cac40_data.csv')
     return df
 
+
 df=ReadDf()
+
+name_map = {
+    'AI.PA': 'Air Liquide',
+    'AIR.PA': 'Airbus',
+    'ALO.PA': 'Alstom',
+    'ATO.PA': 'Atos',
+    'BN.PA': 'Danone',
+    'BNP.PA': 'BNP Paribas',
+    'CA.PA': 'Crédit Agricole',
+    'CAP.PA': 'Capgemini',
+    'CS.PA': 'AXA',
+    'DG.PA': 'Vinci',
+    'DSY.PA': 'Dassault Systèmes',
+    'EL.PA': 'EssilorLuxottica',
+    'EN.PA': 'Bouygues',
+    'ENGI.PA': 'Engie',
+    'ERF.PA': 'Eurofins Scientific',
+    'GLE.PA': 'Société Générale',
+    'HO.PA': 'Thales',
+    'KER.PA': 'Kering',
+    'LR.PA': 'Legrand',
+    'MC.PA': 'LVMH',
+    'ML.PA': 'Michelin',
+    'OR.PA': "L'Oréal",
+    'ORA.PA': 'Orange',
+    'PUB.PA': 'Publicis',
+    'RCO.PA': 'Rémy Cointreau',
+    'RI.PA': 'Pernod Ricard',
+    'RMS.PA': 'Hermès',
+    'SAF.PA': 'Safran',
+    'SAN.PA': 'Sanofi',
+    'SGO.PA': 'Saint-Gobain',
+    'STMPA.PA': 'STMicroelectronics',
+    'SU.PA': 'Schneider Electric',
+    'TEP.PA': 'Téléperformance',
+    'TTE.PA': 'TotalEnergies',
+    'URW.PA': 'UR-Westfield',
+    'VIE.PA': 'Veolia',
+    'VIV.PA': 'Vivendi',
+    'WLN.PA': 'Worldline'
+}
+
+
 def Dfcleaning(df):
     df=df.fillna(method='ffill')
     df["Datetime"]=pd.to_datetime(df['Datetime'])
 
-    name_map = {
-        'AI.PA': 'Air Liquide',
-        'AIR.PA': 'Airbus',
-        'ALO.PA': 'Alstom',
-        'ATO.PA': 'Atos',
-        'BN.PA': 'Danone',
-        'BNP.PA': 'BNP Paribas',
-        'CA.PA': 'Crédit Agricole',
-        'CAP.PA': 'Capgemini',
-        'CS.PA': 'AXA',
-        'DG.PA': 'Vinci',
-        'DSY.PA': 'Dassault Systèmes',
-        'EL.PA': 'EssilorLuxottica',
-        'EN.PA': 'Bouygues',
-        'ENGI.PA': 'Engie',
-        'ERF.PA': 'Eurofins Scientific',
-        'GLE.PA': 'Société Générale',
-        'HO.PA': 'Thales',
-        'KER.PA': 'Kering',
-        'LR.PA': 'Legrand',
-        'MC.PA': 'LVMH',
-        'ML.PA': 'Michelin',
-        'OR.PA': "L'Oréal",
-        'ORA.PA': 'Orange',
-        'PUB.PA': 'Publicis',
-        'RCO.PA': 'Rémy Cointreau',
-        'RI.PA': 'Pernod Ricard',
-        'RMS.PA': 'Hermès',
-        'SAF.PA': 'Safran',
-        'SAN.PA': 'Sanofi',
-        'SGO.PA': 'Saint-Gobain',
-        'STMPA.PA': 'STMicroelectronics',
-        'SU.PA': 'Schneider Electric',
-        'TEP.PA': 'Téléperformance',
-        'TTE.PA': 'TotalEnergies',
-        'URW.PA': 'UR-Westfield',
-        'VIE.PA': 'Veolia',
-        'VIV.PA': 'Vivendi',
-        'WLN.PA': 'Worldline'
-    }
     df = df.rename(columns=name_map)
 
     return df
 
+
 df=Dfcleaning(df)
+
+
 def GetReturnSinceLookBack(df,lookback_days):
     latest_index=df.index[-1]
     todaysdate=df['Datetime'].dt.date.iloc[latest_index]
-    print(todaysdate)
     lookback_date=todaysdate-pd.Timedelta(days=lookback_days)
-    print(lookback_date)
     morningtime=pd.Timestamp(f"{lookback_date} 08:00:00+00:00")
     morning_index=df.index[df['Datetime']==morningtime][0]
 
     return (df.iloc[latest_index,1:]-df.iloc[morning_index,1:])/df.iloc[morning_index,1:]*100
+
 
 
 
@@ -96,12 +104,59 @@ def GetDfForDashboard(df):
     return df_dashboard
 
 df_dash=GetDfForDashboard(Dfcleaning(ReadDf()))
-print(df_dash)
 
 
 
-def getInfoperTicker(ticker):
-    longtimedata=df[ticker]
-    print(longtimedata)
+
+def getInfoperTicker(df,ticker):
+    longtimedata=df[["Datetime",ticker]]
+    latestdate=df['Datetime'].dt.date.iloc[df.index[-1]]
+
+    #request on yfinance to get the 5min data for today
+    key_ticker=[ a for a, b in name_map.items() if b == ticker]
+
+    intraday_data=yf.download(key_ticker[0], period='1d', interval="1m")[['Close', 'Volume']]
+    intraday_data=intraday_data.reset_index()
+
+    time_list=[]
+    price_list=[]
+    volume_list=[]
 
 
+    timespan = pd.date_range(start="08:00",end="16:29",freq='1min')
+    time_list = timespan.strftime('%H:%M').tolist()
+
+    for i in range(len(time_list)):
+        volume_list.append(np.nan)
+        price_list.append(np.nan) # a fix for later decalage issue
+
+    volume_list[0]=(intraday_data.iloc[0,2]) #first vol
+
+    for i in range(1,len(intraday_data)):
+        volume_list[i]=volume_list[i-1]+intraday_data.iloc[i,2]
+        price_list[i]=intraday_data.iloc[i,1]
+
+
+
+    for i in range(len(intraday_data)):
+
+        price_list.append(intraday_data.iloc[i,1])
+    short_df=pd.DataFrame()
+    short_df["Time"]=time_list
+    short_df["Volume"]=volume_list
+
+
+    sevendays_data=yf.download(key_ticker[0], period='7d', interval="1h")[['Close', 'Volume']]
+    onemonth_data=yf.download(key_ticker[0], period='30d', interval="1h")[['Close', 'Volume']]
+
+
+
+
+    return short_df, sevendays_data, onemonth_data
+
+
+short_df,sevendays_data,onemonth_data=getInfoperTicker(df,'AXA')
+
+print(short_df)
+print(sevendays_data)
+print(onemonth_data)
