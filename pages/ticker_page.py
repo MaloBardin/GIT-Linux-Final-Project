@@ -1,13 +1,18 @@
 import streamlit as st
-from pathlib import Path
+from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
 
-def local_css():
-    css_file_path = Path(__file__).parent.parent / "style.css"
-    try:
-        with open(css_file_path) as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.error(f"Erreur: Fichier CSS non trouvé à {css_file_path}")
+col_title, col_button = st.columns([4, 1])
+with col_title:
+    st.title("Ticker")
 
-local_css()
+with col_button:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("⬅️ Retour au Dashboard"):
+        url = "/home_page"
+        st.markdown(
 
+            f'<meta http-equiv="refresh" content="0; url={url}" target="_self">',
+            unsafe_allow_html=True
+        )
+
+st.write("Détails du ticker...")

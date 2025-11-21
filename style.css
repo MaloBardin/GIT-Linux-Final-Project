@@ -15,14 +15,14 @@
     display: inline-block;
     white-space: nowrap;
     padding-left: 100%;
-    animation: ticker-animation 30s linear infinite;
+    animation: ticker-animation 100s linear infinite;
 }
 
 .ticker-item {
     display: inline-block;
     padding: 0 2rem;
     font-size: 18px;
-    color: #00ff00;
+    color: #23830f;
     font-weight: bold;
     font-family: 'Courier New', Courier, monospace;
 }

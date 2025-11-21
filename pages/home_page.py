@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import math
+from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
+
 
 query_params = st.query_params
 st.set_page_config(layout="wide")
@@ -9,29 +11,58 @@ def local_css(file_name):
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 local_css("style.css")
 
-#HEADER
-message_ban = "test"
+theme = st.radio("Choose theme", ["light", "dark"])
 
+# Appliquer le CSS selon le choix
+if theme == "light":
+    st.markdown("""
+        <style>
+        .stApp {
+            background-color: grey !important;
+            color: #111 !important;
+        }
+        .ticker-wrap { background-color: #eaeaea; }
+        </style>
+    """, unsafe_allow_html=True)
+
+else:
+    st.markdown("""
+        <style>
+        .stApp {
+            background-color: #1e1e1e !important;
+            color: #f5f5f5 !important;
+        }
+        .ticker-wrap { background-color: #262730; }
+        </style>
+    """, unsafe_allow_html=True)
+
+#HEADER
+df_total = GetDfForDashboard(Dfcleaning(ReadDf()))
+
+df2 = df_total.copy()
+df2['Price_Str'] = df2['Price'].apply(lambda x: f"{x:.2f}")
+df2['Formatted_Ticker'] = df2['Ticker'] + ' : ' + df2['Price_Str']
+
+message_ban_tickers = ' | '.join(df2['Formatted_Ticker'])
+colors = ['#e60000', '#23830f']  # rouge, vert
+
+formatted_list = [
+    f'<span style="color:{colors[i % len(colors)]};">{ticker}</span>'
+    for i, ticker in enumerate(df2['Formatted_Ticker'])
+]
+message_ban_tickers = ' | '.join(formatted_list)
 st.markdown(f"""
     <div class="ticker-wrap">
         <div class="ticker-move">
-            <div class="ticker-item">{message_ban}</div>
+            <div class="ticker-item">{message_ban_tickers}</div>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
 
 #TABLE
-data = {
-    "Ticker": ["AAPL", "TSLA", "MSFT", "BTC-USD", "ETH-USD"],
-    "Prix": [182.5, 245.3, 330.8, 45000, 2400],
-    "Volatilité (%)": [22.1, 48.3, 19.5, 65.2, 72.0],
-    "Volume (M)": [98, 120, 76, 35, 28],
-    "Beta": [1.10, 1.85, 0.95, 0.50, 0.70],
-    "Market Cap (B$)": [2900, 780, 2500, 880, 360]
-}
 
-df_total = pd.DataFrame(data)
+
 ROWS_PER_PAGE = 10
 
 if 'page_number' not in st.session_state:
@@ -61,13 +92,14 @@ def color_volatility(val):
     return f'color: {color};'
 
 def color_price(val):
+
     color = 'green'
     #A modifier
     if not isinstance(val, (int, float)):
         return ''
-    if val > 300:
+    if val > 0:
         color = 'green'
-    elif val < 300:
+    elif val < 0:
         color = 'red'
     else:
         return ''
@@ -79,7 +111,7 @@ def make_clickable(row):
         row['Button'] = ""
         return row
     ticker_value = row['Ticker']
-    page_url = "/Ticker_Page"
+    page_url = "/ticker_page"
     row["Button"] = (
         f'<a target="_self" href="{page_url}?ticker={ticker_value}" '
         f'style="text-decoration: none; color: inherit; font-weight: bold; display: block; padding: 10px;">'
@@ -95,11 +127,8 @@ print(df_display)
 
 styled_df = df_display.style
 styled_df = styled_df.map(
-    color_volatility,
-    subset=['Volatilité (%)']
-).map(
     color_price,
-    subset=['Prix']
+    subset=['Return_1d','Return_7d','Return_30d' ]
 )
 styled_df = styled_df.set_table_attributes('class="big-font-table"')
 
