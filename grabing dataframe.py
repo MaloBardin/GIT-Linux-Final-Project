@@ -149,14 +149,17 @@ def getInfoperTicker(df,ticker):
     sevendays_data=yf.download(key_ticker[0], period='7d', interval="1h")[['Close', 'Volume']]
     onemonth_data=yf.download(key_ticker[0], period='30d', interval="1h")[['Close', 'Volume']]
 
+    isoverbuying=(100*intraday_data.iloc[-1,1])/onemonth_data['Close'].mean()-100
 
 
 
-    return short_df, sevendays_data, onemonth_data
+
+    return short_df, sevendays_data, onemonth_data, isoverbuying
 
 
-short_df,sevendays_data,onemonth_data=getInfoperTicker(df,'AXA')
+short_df,sevendays_data,onemonth_data,isoverbuying=getInfoperTicker(df,'AXA')
 
 print(short_df)
 print(sevendays_data)
 print(onemonth_data)
+print(isoverbuying)
