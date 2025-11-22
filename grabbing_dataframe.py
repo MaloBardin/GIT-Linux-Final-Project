@@ -159,7 +159,21 @@ def getInfoperTicker(df,ticker):
 
 short_df,sevendays_data,onemonth_data,isoverbuying=getInfoperTicker(df,'AXA')
 
-print(short_df)
-print(sevendays_data)
-print(onemonth_data)
-print(isoverbuying)
+def getDfForGraph(df,dayforgraphlookback=30):
+
+    graph_df=pd.DataFrame()
+
+    latest_index = df.index[-1]
+    todaysdate = df['Datetime'].dt.date.iloc[latest_index]
+    lookback_date = todaysdate - pd.Timedelta(days=dayforgraphlookback)
+    morningtime = pd.Timestamp(f"{lookback_date} 08:00:00+00:00")
+    morning_index = df.index[df['Datetime'] == morningtime][0]
+
+
+    for ticker in df.columns[1:]:
+        graph_df[ticker]=df[ticker]
+    graph_df=graph_df[morning_index:-1:1]  # last 7 days assuming 9 data points per day
+    return graph_df
+
+
+print(getDfForGraph(Dfcleaning(ReadDf())))
