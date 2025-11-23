@@ -44,30 +44,6 @@ def generate_sparkline(data):
     return svg
 
 
-#light mode
-theme = ["dark"]
-
-if theme == "light":
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: grey !important;
-            color: #111 !important;
-        }
-        .ticker-wrap { background-color: #eaeaea; }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: #1e1e1e !important;
-            color: #f5f5f5 !important;
-        }
-        .ticker-wrap { background-color: #262730; }
-        </style>
-    """, unsafe_allow_html=True)
-
 #header
 df_total = GetDfForDashboard(Dfcleaning(ReadDf()))
 

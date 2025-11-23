@@ -91,7 +91,7 @@ with col_right:
             w1 = st.slider("MA Courte", 5, 200, value=20)
             w2 = st.slider("MA Longue", 5, 200, value=50)
 
-    with st.container(border=False): # pas utile 
+    with st.container(border=False): # pas utile
         submitted = st.button(
             "Run backtest",
             type="primary",
@@ -127,16 +127,18 @@ with col_left:
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(
+                x = df_strategy.index,
                 y=df_strategy['Asset_only'], mode='lines',
                 name='Asset Only', line=dict(color='red')
             ))
             fig.add_trace(go.Scatter(
+                x=df_strategy.index,
                 y=df_strategy['Strategy'], mode='lines',
                 name='Strategy', line=dict(color='green')
             ))
             fig.update_layout(
                 title=f'{ticker} — Asset vs Strategy',
-                xaxis_title='Time', yaxis_title='Value',
+                xaxis_title='Time', yaxis_title='Price (%)',
                 hovermode='x unified',
                 template='plotly_dark'
             )

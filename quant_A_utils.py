@@ -32,20 +32,23 @@ def long_moving_average(df, freq,risk_free_rate = 0.05,transaction_cost=0.01, wi
     rf_adjusted = risk_free_rate_conversion(risk_free_rate, freq)
     df['Return'] = df['Close'].pct_change()
 
-    # moving average
     df['MA'] = df['Close'].rolling(window).mean()
     df['Position'] = (df['Close'] > df['MA']).astype(int)
 
-    # detect changes in position (buy/sell)
-    df['Trade'] = df['Position'].diff().abs()   # 1 = trade, 0 = nothing
+    df['Trade'] = df['Position'].diff().abs()
 
-    # apply costs ONLY when there is a trade
     df['Cost'] = df['Trade'] * transaction_cost
 
     df['Strategy_Return'] = df['Position'] * (df['Return'] + rf_adjusted) - df['Cost']
 
-    df['Strategy'] = (1 + df['Strategy_Return']).cumprod()
-    df['Asset_only'] = df['Close'] / df['Close'].iloc[0]
+    df['Strategy'] = (1 + df['Strategy_Return']).cumprod() - 1
+
+    df['Asset_only'] = df['Close'].pct_change().add(1).cumprod() - 1
+
+    df = df.dropna().copy()
+    df['Strategy'] = (df['Strategy'] - df['Strategy'].iloc[0])
+    df['Asset_only'] = df['Asset_only'] - df['Asset_only'].iloc[0]
+
 
     return df.dropna()
 
@@ -59,8 +62,13 @@ def double_moving_average(df, w1=20, w2 = 50):
     df['Position'] = (df['MA_short'] > df['MA_long']).astype(int)
 
     df['Strategy_Return'] = df['Position'] * df['Return']
-    df['Strategy'] = (1 + df['Strategy_Return']).cumprod()
-    df['Asset_only'] = df['Close'] / df['Close'].iloc[0]
+    df['Strategy'] = (1 + df['Strategy_Return']).cumprod() - 1
+
+    df['Asset_only'] = df['Close'].pct_change().add(1).cumprod() - 1
+
+    df = df.dropna().copy()
+    df['Strategy'] = (df['Strategy'] - df['Strategy'].iloc[0])
+    df['Asset_only'] = df['Asset_only'] - df['Asset_only'].iloc[0]
     return df.dropna()
 
 
