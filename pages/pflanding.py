@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from BLStrat import getPrintableDf
-from BLStrat import RunBacktest,GetInfoOnBacktest
+from BLStrat import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix
 import plotly.express as px
 
 st.set_page_config(layout="wide")
@@ -51,11 +51,9 @@ with col_info:
     if st.button("ℹ️", help="About the Black-Litterman Model"):
         show_bl_info()
 
-
-
-
-
 col_gauche, col_droite = st.columns([3, 1], gap="medium")
+
+
 
 
 #sliders
@@ -69,10 +67,37 @@ with col_droite:
         if confidence_param == 0:
             confidence_param = 0.01
         confidence_param=confidence_param/100
+    status_placeholder = st.empty()
+
 
     with st.container(border=False):
         if st.button("Run backtest", type="primary", use_container_width=True):
-            RunBacktest(hold_param, hist_param, numberviews_param, confidence_param)
+            with st.spinner('⏳ Running backtest, please wait...'):
+                RunBacktest(hold_param, hist_param, numberviews_param, confidence_param)
+                # Le spinner disparaît automatiquement ici, sans st.empty().
+                st.success("✅ Backtest finished !")
+
+
+    with st.container(border=False):
+        dfprice=pd.read_csv('data3y.csv')
+        df_corr = getCorrelationMatrix(dfprice,dfprice['Date'].iloc[-1],22*hist_param)
+        fig_corr = px.imshow(
+            df_corr,
+            text_auto=True,
+            color_continuous_scale='RdBu_r',
+            title="Correlation Matrix of the Assets"
+        )
+
+        fig_corr.update_layout(
+            xaxis_title=None,
+            yaxis_title=None,
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)"
+        )
+
+        st.plotly_chart(fig_corr,config={'staticPlot': True}, use_container_width=True)
+
+
 #graph
 with col_gauche:
 
@@ -122,6 +147,4 @@ with col_gauche:
 
 
         st.plotly_chart(fig,config={'staticPlot': True}, use_container_width=True)
-
-
 

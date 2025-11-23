@@ -21,6 +21,7 @@ def GetDf():
     ]
 
     df = yf.download(cac40, period='3y', interval='1d')['Close']
+    df.to_csv("data3y.csv")
     return df
 
 df = GetDf()
@@ -40,6 +41,7 @@ df
 #%%
 def GetReturn(df, date, lookback):
     date = pd.to_datetime(date)
+
     if date not in df["Date"].values:
         #add breaker if windows not in df
         raise ValueError("Date not in dataframe")
@@ -210,7 +212,6 @@ def GetPMatrix(df,date, lookback,proportion=3):
     #print("P : ",P,"Q : ",Q)
 
     return P, Q
-PMatrix,TempoQ=GetPMatrix(df,"2023-12-01",lookback=180,proportion=3)
 #%%
 def GetOmega(PMatrix, Sigma, c=0.99):
     #Omega is the uncertainty of the views
@@ -281,7 +282,7 @@ def Backtester(df,hold, hist, proportion,df_toBL, RfDf,confidence2,proportion2,t
 
     StockQty = df.copy()
     StockQty.drop(columns="MonthIndex", inplace=True)
-    start=30*hist  #start after hist months
+    start=20*hist  #start after hist months
 
 
     StockQty.loc[:, :] = 0
@@ -341,6 +342,7 @@ def Backtester(df,hold, hist, proportion,df_toBL, RfDf,confidence2,proportion2,t
     return StockQty
 
 def RunBacktest(hold=1, hist=3, proportion=3,confidence=0.2):
+    print(hold, hist, proportion,confidence)
     RfDf=GetRfDataframe(df)
     final = Backtester(dfbacktest, hold=hold, hist=hist, proportion=proportion, df_toBL=df,RfDf=RfDf,confidence2=confidence,proportion2=proportion,taux2=0.01,Lambda2=3)
     final.to_csv("backtest_bl.csv")
@@ -387,8 +389,36 @@ def GetInfoOnBacktest(df_final):
     print(listofmostpickedassets)
     return listofmostpickedassets
 
-RunBacktest()
 
-df_final=pd.read_csv("backtest_bl.csv")
-GetInfoOnBacktest(df_final)
 #%%
+def GetReturnwihtoutcv(df, date, lookback):
+
+    if date not in df["Date"].values:
+        #add breaker if windows not in df
+        raise ValueError("Date not in dataframe")
+    returns_df = df[["Date", "AI.PA", "AIR.PA", "ALO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
+                     "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
+                     "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
+                     "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
+                     "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]].copy()
+
+    date_list = returns_df.drop(columns="Date")
+    date_index = returns_df.index[returns_df["Date"] == date][0]
+    returns_df = returns_df[(returns_df.index <= date_index) & (returns_df.index >= date_index - lookback)]
+    returns_df.drop(columns="Date", inplace=True)
+
+    returns_df = np.log(returns_df / returns_df.shift(1))
+    returns_df.dropna(inplace=True)
+    #print(returns_df.std().mean()) #verification if std is around 1% daily
+
+    return returns_df
+
+
+
+
+def getCorrelationMatrix(df, date, lookback):
+    print(date)
+    returns_df = GetReturnwihtoutcv(df, date, lookback=lookback)
+    correlation_matrix = returns_df.corr()
+
+    return correlation_matrix
