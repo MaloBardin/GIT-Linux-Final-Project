@@ -5,56 +5,80 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from fredapi import Fred
 import warnings
+import yfinance as yf
 warnings.filterwarnings("ignore")
+from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
+#%%
+def GetDf():
+    # tickers cac40
+    cac40 = [
+        '^FCHI','AI.PA', 'AIR.PA', 'ALO.PA', 'BN.PA', 'BNP.PA', 'CA.PA',
+        'CAP.PA', 'CS.PA', 'DG.PA', 'DSY.PA', 'EL.PA', 'EN.PA', 'ENGI.PA',
+        'ERF.PA', 'GLE.PA', 'HO.PA', 'KER.PA', 'LR.PA', 'MC.PA', 'ML.PA',
+        'OR.PA', 'ORA.PA', 'PUB.PA', 'RCO.PA', 'RI.PA', 'RMS.PA', 'SAF.PA',
+        'SAN.PA', 'SGO.PA', 'STMPA.PA', 'SU.PA', 'TEP.PA',
+        'TTE.PA', 'VIE.PA', 'VIV.PA', 'WLN.PA'
+    ]
+
+    df = yf.download(cac40, period='3y', interval='1d')['Close']
+    return df
+
+df = GetDf()
+df = df.reset_index()
+df.columns = df.columns.str.replace('^FCHI', 'Cac40')
+
+autres_colonnes = [col for col in df.columns if col not in ['Date', 'Cac40']]
+df = df[['Date', 'Cac40'] + autres_colonnes]
+
+
+df["Date"] = pd.to_datetime(df["Date"])
+print(df.columns)
 
 #%%
-df = pd.read_csv("cac40_data.csv", sep=";", decimal=",")
-df = df.rename(columns={
-    "Datetime": "Date",
-})
-df["Date"] = pd.to_datetime(df["Date"], format="%d/%m/%Y")
+df
+
 #%%
-def GetReturn(df,date,lookback):
-    date=pd.to_datetime(date)
-    if date not in df["Date"].values:#add breaker if windows not in df
+def GetReturn(df, date, lookback):
+    date = pd.to_datetime(date)
+    if date not in df["Date"].values:
+        #add breaker if windows not in df
         raise ValueError("Date not in dataframe")
-    returns_df = df[["Date","AI.PA", "AIR.PA", "ALO.PA", "ATO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
-    "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
-    "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
-    "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
-    "SU.PA", "TEP.PA", "TTE.PA", "URW.PA", "VIE.PA", "VIV.PA", "WLN.PA"]].copy()
+    returns_df = df[["Date", "AI.PA", "AIR.PA", "ALO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
+                     "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
+                     "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
+                     "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
+                     "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]].copy()
 
-    date_list=returns_df.drop(columns="Date")
+    date_list = returns_df.drop(columns="Date")
     date_index = returns_df.index[returns_df["Date"] == date][0]
-    returns_df=returns_df[(returns_df.index<=date_index) & (returns_df.index>=date_index-lookback) ]
-    returns_df.drop(columns="Date",inplace=True)
+    returns_df = returns_df[(returns_df.index <= date_index) & (returns_df.index >= date_index - lookback)]
+    returns_df.drop(columns="Date", inplace=True)
 
-    returns_df = np.log(returns_df/ returns_df.shift(1))
+    returns_df = np.log(returns_df / returns_df.shift(1))
     returns_df.dropna(inplace=True)
     #print(returns_df.std().mean()) #verification if std is around 1% daily
 
     return returns_df
 
 
-def GetReturnSPX(df,date,lookback):
-    date=pd.to_datetime(date)
-    if date not in df["Date"].values:#add breaker if windows not in df
+def GetReturnSPX(df, date, lookback):
+    date = pd.to_datetime(date)
+    if date not in df["Date"].values:  #add breaker if windows not in df
         raise ValueError("Date not in dataframe")
-    returns_df = df[["Date","AI.PA"]].copy()
+    returns_df = df[["Date", "Cac40"]].copy()
 
-    date_list=returns_df.drop(columns="Date")
+    date_list = returns_df.drop(columns="Date")
     date_index = returns_df.index[returns_df["Date"] == date][0]
-    returns_df=returns_df[(returns_df.index<=date_index) & (returns_df.index>=date_index-lookback) ]
-    returns_df.drop(columns="Date",inplace=True)
+    returns_df = returns_df[(returns_df.index <= date_index) & (returns_df.index >= date_index - lookback)]
+    returns_df.drop(columns="Date", inplace=True)
 
-    returns_df = np.log(returns_df/ returns_df.shift(1))
+    returns_df = np.log(returns_df / returns_df.shift(1))
     returns_df.dropna(inplace=True)
     #print(returns_df.std().mean()) #verification if std is around 1% daily
 
     return returns_df
 
-#Returns=GetReturn(df,"2020-05-11",lookback=180)
-#ReturnsSPX=GetReturnSPX(df,"2020-05-11",lookback=180)
+
 #%%
 def GetSigma(df,date,lookback):
     returns_df=GetReturn(df,date,lookback=lookback)
@@ -63,7 +87,6 @@ def GetSigma(df,date,lookback):
 
     return sigma_windowed
 
-#Sigma=GetSigma(df,"2020-05-11",lookback=180)
 #%%
 def GetRfDataframe(df):
     fred = Fred(api_key="5c742a53d96bd3085e9199dcdb5af60b")
@@ -112,6 +135,8 @@ def GetRfDataframe(df):
 def GetRiskFree(df,date,lookback,RfDf):
     positionOfStartDate=df.index[df["Date"]==pd.to_datetime(date)][0]-lookback
     #print(positionOfStartDate)
+
+
     startDate=pd.to_datetime(df.iloc[positionOfStartDate,0])
     endDate=pd.to_datetime(date)
     RfDf=RfDf[(RfDf.index >= startDate) & (RfDf.index <= endDate )].copy()
@@ -128,55 +153,26 @@ def GetRiskFree(df,date,lookback,RfDf):
 
     return RfDf["CumulativeRf"].iloc[-1]
 
-RfDf=GetRfDataframe(df)
 #%%
 def GetWeight(df,date):
     #for the moment we will use the equal weight
-    weight_vector=np.zeros((24,1))
-    for i in range(0,24):
-        weight_vector[i]=1/24
+    weight_vector=np.zeros((36,1))
+    for i in range(0,36):
+        weight_vector[i]=1/36
 
     return weight_vector
-#Weight=GetWeight(df,"2020-05-11")
 
-#%%
-def GetLambda(df,date,timeofcalculation,RfDf):
-    returns=GetReturn(df,date,timeofcalculation)
-    weight_vector=GetWeight(df=0,date=0)
-
-    mean_return=np.mean(np.dot(returns,weight_vector))
-    mean_annual=(1+mean_return)**252-1
-
-
-    rf_temps=GetRiskFree(df,date,timeofcalculation,RfDf)
-    rf_annual=(1+rf_temps)**(252/timeofcalculation)-1
-
-
-    Sigma=GetSigma(df,date,timeofcalculation)
-    Sigma_annual=252*Sigma
-    var = float((weight_vector.T @ Sigma_annual.values @ weight_vector).item())
-    print(var)
-    lambda_value=(mean_annual - rf_annual)/var
-
-
-    excess = mean_annual - rf_annual
-    sigma2 = var
-    sigma  = np.sqrt(var)
-    lam    = excess / sigma2
-    sharpe = excess / sigma
-    print("Excess:", excess, " Var:", sigma2, " Vol:", sigma, " λ:", lam, " Sharpe:", sharpe)
-
-    return lambda_value
-
-
-
-Lambda=GetLambda(df,"2024-01-11",timeofcalculation=3500,RfDf=RfDf)
 #%%
 def GetPMatrix(df,date, lookback,proportion=3):
     #(date)
     #print(proportion)
     #print(lookback)
-    AssetColumns=["S5SFTW","S5PHRM","S5CPGS","S5ENRSX","S5FDBT","S5TECH","S5RETL","S5BANKX","S5HCES","S5DIVF","S5UTILX","S5MEDA","S5REAL","S5TELSX","S5MATRX","S5INSU","S5FDSR","S5HOUS","S5SSEQX","S5TRAN","S5HOTR","S5CODU","S5AUCO","S5COMS"]
+    AssetColumns = [
+    "AI.PA", "AIR.PA", "ALO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
+    "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
+    "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
+    "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
+    "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]
     bestperformer = []
     performerc = []
     returnBestPerformer=[]
@@ -201,7 +197,7 @@ def GetPMatrix(df,date, lookback,proportion=3):
         returnBestPerformer.append(performerc[i][0])
 
 
-    P=np.zeros((proportion,24))
+    P=np.zeros((proportion,36))
     Q=np.zeros((proportion,1))
     for lineview in range(proportion):
         for i in range(len(AssetColumns)):
@@ -209,12 +205,12 @@ def GetPMatrix(df,date, lookback,proportion=3):
         P[lineview,bestperformer[lineview]]=1-1/len(AssetColumns)
 
     for i in range(proportion):
-        Q[i,0]=((returnBestPerformer[i]-perfMarket)/2)/100
+        Q[i,0]=((returnBestPerformer[i]-perfMarket))/100
 
     #print("P : ",P,"Q : ",Q)
 
     return P, Q
-PMatrix,TempoQ=GetPMatrix(df,"2016-05-11",lookback=180,proportion=3)
+PMatrix,TempoQ=GetPMatrix(df,"2023-12-01",lookback=180,proportion=3)
 #%%
 def GetOmega(PMatrix, Sigma, c=0.99):
     #Omega is the uncertainty of the views
@@ -224,20 +220,15 @@ def GetOmega(PMatrix, Sigma, c=0.99):
 
     return Omega
 #%%
-def BlackAndLittermanModel(backtestStartDate, rebalancingFrequency, lookbackPeriod, df,RfDf):
+def BlackAndLittermanModel(backtestStartDate, rebalancingFrequency, lookbackPeriod, df,RfDf,confidence=0.1,proportion=3,taux=0.01,Lambda=3):
     #implement the full backtest of the black and litterman model
 
     #---------
     #PARAMETERS
     #---------
-
-    free_asset=0 #proportion of risk free asset allocated in the benchmark
-    taux=0.01
-
     Sigma=GetSigma(df,backtestStartDate,lookback=lookbackPeriod)
-    Lambda=3
-    PMatrix,Q= GetPMatrix(df,backtestStartDate, lookback=lookbackPeriod,proportion=3)
-    Omega=GetOmega(PMatrix, Sigma, c=0.1)
+    PMatrix,Q= GetPMatrix(df,backtestStartDate, lookback=lookbackPeriod,proportion=proportion)
+    Omega=GetOmega(PMatrix, Sigma, c=confidence)
     rf=GetRiskFree(df,backtestStartDate,lookbackPeriod,RfDf)
     weights = GetWeight(df, backtestStartDate)
     weights = np.array(weights).reshape(-1, 1)
@@ -256,13 +247,9 @@ def BlackAndLittermanModel(backtestStartDate, rebalancingFrequency, lookbackPeri
     #MarkowitzAllocation
     WeightBL=np.linalg.inv(Sigma)@(optimizedReturn-rf)/Lambda
 
-    if not np.isclose(float(np.sum(WeightBL)), 1.0, atol=1e-6):
-        raise ValueError("Weights do not sum to 1, please investigate.")
 
     return WeightBL
 
-
-BlackAndLittermanModel("2018-05-11", rebalancingFrequency=3, lookbackPeriod=180, df=df,RfDf=RfDf)
 
 #%%
 from rich.console import Console
@@ -280,9 +267,6 @@ df_length = dfbacktest.shape[1] - 2  # bcs of date and spx
 last_rebalance = dfbacktest.loc[0, "Date"]  # première date
 month_count = 0
 
-hold = 1
-hist = 0
-proportion = 3
 
 console.print(Panel.fit(
     "[bold cyan]📊 PORTFOLIO BACKTESTER[/bold cyan]\n"
@@ -290,24 +274,14 @@ console.print(Panel.fit(
     border_style="cyan"
 ))
 
-console.print(f"\n[yellow]⚙️  Configuration :[/yellow]")
-console.print(f"   • Hold period: [cyan]{hold}[/cyan] mois")
-console.print(f"   • Historique: [cyan]{hist}[/cyan] mois")
-console.print(f"   • Proportion: [cyan]{proportion}[/cyan]")
-console.print("\n[yellow]⏳ Lancement du backtest...[/yellow]\n")
 
 
-
-
-
-
-
-def Backtester(df,hold, hist, proportion,df_toBL, RfDf):
+def Backtester(df,hold, hist, proportion,df_toBL, RfDf,confidence2,proportion2,taux2,Lambda2):
     #new dataframe for stock quantity
 
     StockQty = df.copy()
     StockQty.drop(columns="MonthIndex", inplace=True)
-    start=181
+    start=30*hist  #start after hist months
 
 
     StockQty.loc[:, :] = 0
@@ -318,7 +292,7 @@ def Backtester(df,hold, hist, proportion,df_toBL, RfDf):
 
     #first ligne
     StockQty.loc[start, "Money"] = MoneyAtStart
-    StockQty.loc[start, "SPX"] = df.iloc[start, 1]
+    StockQty.loc[start, "Cac40"] = df.iloc[start, 1]
     StockQty.loc[start, "Date"] = df.iloc[start, 0]
 
     #start of the algorithm
@@ -337,7 +311,10 @@ def Backtester(df,hold, hist, proportion,df_toBL, RfDf):
       if i>= hist and month_count % hold == 0 and df.loc[i, "Date"].month != df.loc[i - 1, "Date"].month:
         #print(f"🔁 Rebalancement déclenché à la date : {df.loc[i, 'Date'].date()}")
         #print(str(df.iloc[i,0]))
-        BLWeight=BlackAndLittermanModel(str(df.iloc[i,0]),3,3*22,df_toBL,RfDf)
+
+
+
+        BLWeight=BlackAndLittermanModel(str(df.iloc[i,0]),0,hist*22,df_toBL,RfDf,confidence=confidence2,proportion=proportion2,taux=taux2,Lambda=Lambda2)
         #print(len(BLWeight))
         for index in range(len(BLWeight)):
             StockQty.iloc[i,index+2]=(BLWeight.iloc[index,0]*CurrentValue)/df.iloc[i,index+2] #qty = weight*total value/price
@@ -363,106 +340,55 @@ def Backtester(df,hold, hist, proportion,df_toBL, RfDf):
     StockQty = StockQty.iloc[start:].reset_index(drop=True)
     return StockQty
 
+def RunBacktest(hold=1, hist=3, proportion=3,confidence=0.2):
+    RfDf=GetRfDataframe(df)
+    final = Backtester(dfbacktest, hold=hold, hist=hist, proportion=proportion, df_toBL=df,RfDf=RfDf,confidence2=confidence,proportion2=proportion,taux2=0.01,Lambda2=3)
+    final.to_csv("backtest_bl.csv")
 
-RfDf=GetRfDataframe(df)
-final = Backtester(dfbacktest, hold=hold, hist=hist, proportion=proportion, df_toBL=df,RfDf=RfDf)
-
-console.print("\n[green]✅ Backtest terminé avec succès ![/green]\n")
-
-
-
-
-
-
-
-
+    console.print("\n[green]✅ Backtest terminé avec succès ![/green]\n")
 #%%
 import plotly.express as px
 import pandas as pd
 
-money_norm = (final["Money"]/10000000*100) - 100
-spx_norm = (final["SPX"]/final["SPX"].iloc[0]*100) - 100
+def getPrintableDf(final):
 
-df_plot = pd.DataFrame({
-    "Date": final["Date"],
-    "Portfolio": money_norm,
-    "SPX": spx_norm
-}).melt(id_vars="Date", var_name="Série", value_name="Évolution en %")
+    money_norm = (final["Money"]/10000000*100) - 100
+    spx_norm = (final["Cac40"]/final["Cac40"].iloc[0]*100) - 100
 
-fix = px.line(
-    df_plot,
-    x="Date",
-    y="Évolution en %",
-    color="Série",
-    color_discrete_map={"SPX": "red", "Portfolio": "green"},
-    title="Comparaison des évolutions en %"
-)
+    df_plot = pd.DataFrame({
+        "Date": final["Date"],
+        "Portfolio": money_norm,
+        "Cac40": spx_norm
+    }).melt(id_vars="Date", var_name="Série", value_name="Évolution en %")
 
-fix.update_layout(hovermode="x unified")
-fix.show()
+    return df_plot
+
 
 #%%
-AnnualizedDf=final[["Date","SPX","Money"]]
-AnnualizedDf['Date'] = pd.to_datetime(AnnualizedDf['Date'])
-AnnualizedDf['Year'] = AnnualizedDf['Date'].dt.year
 
 
+def GetInfoOnBacktest(df_final):
+    col_name = "Unnamed: 0"
 
-YearList=AnnualizedDf["Year"].unique()
-SPXAnnualized=pd.DataFrame(columns=YearList)
-StratAnnualized=pd.DataFrame(columns=YearList)
+    if col_name in df_final.columns:
+        df_final = df_final.drop(columns=[col_name])
 
-
-
-for year in YearList:
-  compteurPerYear=0
-  for i in AnnualizedDf.index:
-    if AnnualizedDf.loc[i,"Year"]==year:
-      if compteurPerYear==0:
-        SPXAnnualized.loc[compteurPerYear,year]=AnnualizedDf.loc[i,"SPX"]
-        StratAnnualized.loc[compteurPerYear,year]=AnnualizedDf.loc[i,"Money"]
-      else :
-        SPXAnnualized.loc[compteurPerYear,year]=AnnualizedDf.loc[i,"SPX"]/SPXAnnualized.loc[0,year]*100-100
-        StratAnnualized.loc[compteurPerYear,year]=AnnualizedDf.loc[i,"Money"]/StratAnnualized.loc[0,year]*100-100
-      compteurPerYear+=1
-
-for year in YearList:
-  SPXAnnualized.loc[0,year]=SPXAnnualized.loc[0,year]/SPXAnnualized.loc[0,year]*100-100
-  StratAnnualized.loc[0,year]=StratAnnualized.loc[0,year]/StratAnnualized.loc[0,year]*100-100
+    listofmostpickedassets=[]
+    for i in range(2,df_final.shape[1]-1):
+        listofmostpickedassets.append((df_final.columns[i],0))
 
 
+    for lines in range(df_final.shape[0]):
+        if df_final.iloc[lines,3] != 0:
+            for assets in range(2,df_final.shape[1]-1):
+                if df_final.iloc[lines,assets] > 0 and df_final.iloc[lines,assets] != df_final.iloc[lines-1,assets]:
+                    listofmostpickedassets[assets-2]=(listofmostpickedassets[assets-2][0],listofmostpickedassets[assets-2][1]+1)
 
-SPXAvg=[]
-StratAvg=[]
-for i in SPXAnnualized.index:
-  sumSPX=0
-  sumStrat=0
-  for year in SPXAnnualized.columns:
-    sumSPX+=SPXAnnualized.loc[i,year]
-    sumStrat+=StratAnnualized.loc[i,year]
-  SPXAvg.append(sumSPX/len(YearList))
-  StratAvg.append(sumStrat/len(YearList))
+    print(listofmostpickedassets)
+    return listofmostpickedassets
 
-SPXAnnualized=SPXAnnualized.drop(columns=[2024,2002]) #too much nan
-StratAnnualized=StratAnnualized.drop(columns=[2024,2002])
+RunBacktest()
 
-SPXAvg=[]
-StratAVG=[]
-
-for i in SPXAnnualized.index:
-  sumSPX=0
-  sumStrat=0
-  for year in SPXAnnualized.columns:
-    sumSPX+=SPXAnnualized.loc[i,year]
-    sumStrat+=StratAnnualized.loc[i,year]
-  SPXAvg.append(sumSPX/len(YearList))
-  StratAVG.append(sumStrat/len(YearList))
-
-dff = pd.DataFrame({"Index": (range(len(SPXAvg))),"Portfolio": StratAVG,"SPX": SPXAvg})
-
-
-fig = px.line(dff, x="Index", y=["SPX","Portfolio"], color_discrete_map={"SPX": "red","Portfolio": "green"})
-fig.show()
-
-
+df_final=pd.read_csv("backtest_bl.csv")
+GetInfoOnBacktest(df_final)
 #%%

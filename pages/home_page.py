@@ -160,3 +160,5 @@ with col3:
     if st.button("Next", disabled=(current_page >= total_pages), use_container_width=True):
         st.session_state.page_number += 1
         st.rerun()
+
+
