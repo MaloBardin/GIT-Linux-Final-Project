@@ -45,7 +45,7 @@ def generate_sparkline(data):
 
 
 #light mode
-theme = st.radio("Choose theme", ["light", "dark"])
+theme = ["dark"]
 
 if theme == "light":
     st.markdown("""
