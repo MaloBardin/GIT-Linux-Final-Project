@@ -1,20 +1,46 @@
 import streamlit as st
-from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf, getInfoperTicker
-df_total = Dfcleaning(ReadDf())
-query_params = st.experimental_get_query_params()
+import pandas as pd
+import plotly.graph_objects as go
+from grabbing_dataframe import getInfoperTicker2
 
-ticker = query_params.get("ticker", [""])[0]
-print(ticker)
-short_df, sevendays_data, onemonth_data, isoverbuying = getInfoperTicker(df_total, ticker)
+st.title("📊 Market Dashboard")
+query_params = st.query_params
+ticker = query_params.get("ticker", "")
 
-#short_df.columns = short_df.columns.droplevel(1)
-sevendays_data.columns = sevendays_data.columns.droplevel(1)
-onemonth_data.columns = onemonth_data.columns.droplevel(1)
-print(short_df)
+if ticker == "":
+    ticker = st.sidebar.text_input("Ticker", value="AAPL")
 
-st.line_chart(short_df['Price'])
-st.bar_chart(short_df['Volume'])
+short_df, sevendays_data, onemonth_data, isoverbuying = getInfoperTicker2(ticker)
 
+period_choice = st.sidebar.radio(
+    "Choisir la période",
+    options=["Intraday (1m)", "7 jours (1h)", "30 jours (1h)"]
+)
 
+# --- Choix du bon df ---
+if period_choice == "Intraday (1m)":
+    df = short_df
+elif period_choice == "7 jours (1h)":
+    df = sevendays_data
+else:
+    df = onemonth_data
 
+# Flatten si MultiIndex
+if isinstance(df.columns, pd.MultiIndex):
+    df.columns = df.columns.get_level_values(0)
 
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=df.index, y=df["Close"], mode="lines", name="Close"))
+fig.add_trace(go.Bar(x=df.index, y=df["Volume"], name="Volume", yaxis="y2", opacity=0.6))
+
+fig.update_layout(
+    title=f"{ticker} — {period_choice}",
+    xaxis_title="Date / Time",
+    yaxis_title="Close",
+    yaxis2=dict(title="Volume", overlaying="y", side="right"),
+    template="plotly_dark"
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+st.write(f"🔍 Overbuying indicator: **{isoverbuying:.2f}%**")
