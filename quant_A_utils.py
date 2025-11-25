@@ -30,45 +30,42 @@ def risk_free_rate_conversion(rate, freq):
 def long_moving_average(df, freq,risk_free_rate = 0.05,transaction_cost=0.01, window=20  ):
     df = df.copy()
     rf_adjusted = risk_free_rate_conversion(risk_free_rate, freq)
-    df['Return'] = df['Close'].pct_change()
+    df['Return'] = df['Close'].pct_change().replace(np.nan, 0)
 
     df['MA'] = df['Close'].rolling(window).mean()
-    df['Position'] = (df['Close'] > df['MA']).astype(int)
-
-    df['Trade'] = df['Position'].diff().abs()
+    df["MA"].replace(np.nan,np.inf, inplace=True)
+    df['Position'] = (df['Close'].shift(1) > df['MA'].shift(1)).astype(int)
+    df['Trade'] = df['Position'].diff().abs().replace(np.nan, 0.0)
 
     df['Cost'] = df['Trade'] * transaction_cost
 
-    df['Strategy_Return'] = df['Position'] * (df['Return'] + rf_adjusted) - df['Cost']
+    df['Strategy_Return'] = (df['Position'] * df['Return'] + (1 - df['Position']) * rf_adjusted - df["Cost"]).replace(np.nan, 0)
 
-    df['Strategy'] = (1 + df['Strategy_Return']).cumprod() - 1
 
-    df['Asset_only'] = df['Close'].pct_change().add(1).cumprod() - 1
-
-    df = df.dropna().copy()
-    df['Strategy'] = (df['Strategy'] - df['Strategy'].iloc[0])
-    df['Asset_only'] = df['Asset_only'] - df['Asset_only'].iloc[0]
+    df["Strategy"] = ((1 + df['Strategy_Return']).cumprod() - 1) * 100
+    df["Asset_only"] = ((1 + df['Return']).cumprod() - 1) * 100
 
 
     return df.dropna()
 
 
-def double_moving_average(df, w1=20, w2 = 50):
+def double_moving_average(df,freq,risk_free_rate = 0.05,transaction_cost=0.01, w1=20, w2 = 50):
     # We buy when the moving average 1 is above the moving average 2 and hold otherwise
     df = df.copy()
+    rf_adjusted = risk_free_rate_conversion(risk_free_rate, freq)
     df['Return'] = df['Close'].pct_change()
     df['MA_short'] = df['Close'].rolling(w1).mean()
     df['MA_long'] = df['Close'].rolling(w2).mean()
-    df['Position'] = (df['MA_short'] > df['MA_long']).astype(int)
+    df['Position'] = (df['MA_short'].shift(1) > df['MA_long'].shift(1)).astype(int)
 
-    df['Strategy_Return'] = df['Position'] * df['Return']
-    df['Strategy'] = (1 + df['Strategy_Return']).cumprod() - 1
+    df['Trade'] = df['Position'].diff().abs().replace(np.nan, 0.0)
 
-    df['Asset_only'] = df['Close'].pct_change().add(1).cumprod() - 1
+    df['Cost'] = df['Trade'] * transaction_cost
 
-    df = df.dropna().copy()
-    df['Strategy'] = (df['Strategy'] - df['Strategy'].iloc[0])
-    df['Asset_only'] = df['Asset_only'] - df['Asset_only'].iloc[0]
+    df['Strategy_Return'] = (df['Position'] * df['Return'] + (1 - df['Position']) * rf_adjusted - df["Cost"]).replace(np.nan, 0)
+
+    df["Strategy"] = ((1 + df['Strategy_Return']).cumprod() - 1) * 100
+    df["Asset_only"] = ((1 + df['Return']).cumprod() - 1) * 100
     return df.dropna()
 
 

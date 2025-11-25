@@ -53,6 +53,8 @@ with col_info:
 col_left, col_right = st.columns([3, 1], gap="medium")
 
 with col_right:
+    w1 = 20
+    w2 = 50
     with st.container(border=True):
         st.write("**Strategy parameters**")
 
@@ -119,7 +121,13 @@ with col_left:
                     window=w
                 )
             else:
-                df_strategy = double_moving_average(df, w1, w2)
+                df_strategy = double_moving_average(
+                    df, freq=interval,
+                    risk_free_rate=risk_free_rate,
+                    transaction_cost=transaction_cost,
+                    w1=w1,
+                    w2=w2
+                )
 
 
 
