@@ -176,6 +176,25 @@ def getInfoperTicker2(df,ticker):
 
     return flatten_columns(short_df), flatten_columns(sevendays_data), flatten_columns(onemonth_data), isoverbuying
 
+
+def getInfoperTicker2(df,ticker):
+    longtimedata=df[["Datetime",ticker]]
+    latestdate=df['Datetime'].dt.date.iloc[df.index[-1]]
+
+    #request on yfinance to get the 5min data for today
+    key_ticker=[ a for a, b in name_map.items() if b == ticker]
+    symbol = key_ticker[0]
+
+    intraday_data=yf.download(symbol, period='1d', interval="1m")[['Close', 'Volume']]
+    sevendays_data=yf.download(symbol, period='7d', interval="1h")[['Close', 'Volume']]
+    onemonth_data=yf.download(symbol, period='30d', interval="1h")[['Close', 'Volume']]
+    oneyear_data=yf.download(symbol, period='1y', interval="1d")[['Close', 'Volume']]
+    fiveyear_data = yf.download(symbol, period='5y', interval="1wk")[['Close', 'Volume']]
+
+    return intraday_data, sevendays_data, onemonth_data, oneyear_data, fiveyear_data
+
+
+
 short_df,sevendays_data,onemonth_data,isoverbuying=getInfoperTicker(df,'AXA')
 
 print(short_df)

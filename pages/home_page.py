@@ -11,30 +11,7 @@ def local_css(file_name):
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 local_css("style.css")
 
-theme = st.radio("Choose theme", ["light", "dark"])
 
-# Appliquer le CSS selon le choix
-if theme == "light":
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: grey !important;
-            color: #111 !important;
-        }
-        .ticker-wrap { background-color: #eaeaea; }
-        </style>
-    """, unsafe_allow_html=True)
-
-else:
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: #1e1e1e !important;
-            color: #f5f5f5 !important;
-        }
-        .ticker-wrap { background-color: #262730; }
-        </style>
-    """, unsafe_allow_html=True)
 
 #HEADER
 df_total = GetDfForDashboard(Dfcleaning(ReadDf()))
@@ -120,7 +97,12 @@ def make_clickable(row):
     )
     return row
 
-df_display = df_page.copy()
+
+#table display
+cols_order = ['Ticker', 'Price', 'Return_1d', 'Return_7d', 'Return_30d', 'Graph', 'Button']
+cols_present = [c for c in cols_order if c in df_page.columns]
+df_display = df_page[cols_present].copy()
+
 df_display = df_display.apply(make_clickable, axis=1)
 
 print(df_display)
@@ -137,6 +119,7 @@ html_table = styled_df.to_html(index=False, border=0)
 
 st.markdown(html_table, unsafe_allow_html=True)
 st.write("")
+
 
 total_pages = math.ceil(len(df_total) / ROWS_PER_PAGE)
 current_page = st.session_state.page_number + 1
