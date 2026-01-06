@@ -156,24 +156,48 @@ def getInfoperTicker(df,ticker):
 
     return short_df, sevendays_data, onemonth_data, isoverbuying
 
+def flatten_columns(df):
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    return df
+
+def getInfoperTicker2(df,ticker):
+    longtimedata=df[["Datetime",ticker]]
+    latestdate=df['Datetime'].dt.date.iloc[df.index[-1]]
+
+    #request on yfinance to get the 5min data for today
+    key_ticker=[ a for a, b in name_map.items() if b == ticker]
+
+    short_df=yf.download(key_ticker[0], period='1d', interval="1m")[['Close', 'Volume']]
+    sevendays_data=yf.download(key_ticker[0], period='7d', interval="1h")[['Close', 'Volume']]
+    onemonth_data=yf.download(key_ticker[0], period='30d', interval="1h")[['Close', 'Volume']]
+
+    isoverbuying=(100*short_df.iloc[-1,1])/onemonth_data['Close'].mean()-100
+
+    return flatten_columns(short_df), flatten_columns(sevendays_data), flatten_columns(onemonth_data), isoverbuying
+
+
+def getInfoperTicker2(df,ticker):
+    longtimedata=df[["Datetime",ticker]]
+    latestdate=df['Datetime'].dt.date.iloc[df.index[-1]]
+
+    #request on yfinance to get the 5min data for today
+    key_ticker=[ a for a, b in name_map.items() if b == ticker]
+    symbol = key_ticker[0]
+
+    intraday_data=yf.download(symbol, period='1d', interval="1m")[['Close', 'Volume']]
+    sevendays_data=yf.download(symbol, period='7d', interval="1h")[['Close', 'Volume']]
+    onemonth_data=yf.download(symbol, period='30d', interval="1h")[['Close', 'Volume']]
+    oneyear_data=yf.download(symbol, period='1y', interval="1d")[['Close', 'Volume']]
+    fiveyear_data = yf.download(symbol, period='5y', interval="1wk")[['Close', 'Volume']]
+
+    return intraday_data, sevendays_data, onemonth_data, oneyear_data, fiveyear_data
+
+
 
 short_df,sevendays_data,onemonth_data,isoverbuying=getInfoperTicker(df,'AXA')
 
-def getDfForGraph(df,dayforgraphlookback=30):
-
-    graph_df=pd.DataFrame()
-
-    latest_index = df.index[-1]
-    todaysdate = df['Datetime'].dt.date.iloc[latest_index]
-    lookback_date = todaysdate - pd.Timedelta(days=dayforgraphlookback)
-    morningtime = pd.Timestamp(f"{lookback_date} 08:00:00+00:00")
-    morning_index = df.index[df['Datetime'] == morningtime][0]
-
-
-    for ticker in df.columns[1:]:
-        graph_df[ticker]=df[ticker]
-    graph_df=graph_df[morning_index:-1:1]  # last 7 days assuming 9 data points per day
-    return graph_df
-
-
-print(getDfForGraph(Dfcleaning(ReadDf())))
+print(short_df)
+print(sevendays_data)
+print(onemonth_data)
+print(isoverbuying)
