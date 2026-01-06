@@ -48,17 +48,23 @@ def generate_sparkline(data):
 df_total = GetDfForDashboard(Dfcleaning(ReadDf()))
 
 df2 = df_total.copy()
-df2['Price_Str'] = df2['Price'].apply(lambda x: f"{x:.2f}")
-df2['Formatted_Ticker'] = df2['Ticker'] + ' : ' + df2['Price_Str']
 
-message_ban_tickers = ' | '.join(df2['Formatted_Ticker'])
-colors = ['#CC4974', '#29f075']  # rouge, vert
+df2['Var_Str'] = df2['Return_1d'].apply(lambda x: f"{x:+.2f}%")
+df2['Formatted_Ticker'] = df2['Ticker'] + ' : ' + df2['Var_Str']
 
-formatted_list = [
-    f'<span style="color:{colors[i % len(colors)]};">{ticker}</span>'
-    for i, ticker in enumerate(df2['Formatted_Ticker'])
-]
-message_ban_tickers = ' | '.join(formatted_list)
+formatted_list = []
+for index, row in df2.iterrows():
+    if row['Return_1d'] >= 0:
+        color = '#29f075'  
+    else:
+        color = '#CC4974'  
+        
+    formatted_list.append(f'<span style="color:{color};">{row["Formatted_Ticker"]}</span>')
+
+separator = ' <span style="color: #FFFFFF;"> | </span> ' 
+
+message_ban_tickers = separator.join(formatted_list)
+
 st.markdown(f"""
     <div class="ticker-wrap">
         <div class="ticker-move">
@@ -66,7 +72,6 @@ st.markdown(f"""
         </div>
     </div>
 """, unsafe_allow_html=True)
-
 #table setup
 
 ROWS_PER_PAGE = 10
