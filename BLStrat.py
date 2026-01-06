@@ -370,23 +370,22 @@ def getPrintableDf(final):
 
 
 def GetInfoOnBacktest(df_final):
-    col_name = "Unnamed: 0"
+    if "Unnamed: 0" in df_final.columns:
+        df_final = df_final.drop(columns=["Unnamed: 0"])
 
-    if col_name in df_final.columns:
-        df_final = df_final.drop(columns=[col_name])
+    listofmostpickedassets = [
+        [df_final.columns[i], 0]
+        for i in range(2, df_final.shape[1]-1)
+    ]
 
-    listofmostpickedassets=[]
-    for i in range(2,df_final.shape[1]-1):
-        listofmostpickedassets.append((df_final.columns[i],0))
+    for lines in range(1, df_final.shape[0]):  # ⚠️ start at 1
+        for assets in range(2, df_final.shape[1]-1):
+            curr = df_final.iloc[lines, assets]
+            prev = df_final.iloc[lines-1, assets]
 
+            if curr > 0 and abs(curr - prev) > 1e-6:
+                listofmostpickedassets[assets-2][1] += 1
 
-    for lines in range(df_final.shape[0]):
-        if df_final.iloc[lines,3] != 0:
-            for assets in range(2,df_final.shape[1]-1):
-                if df_final.iloc[lines,assets] > 0 and df_final.iloc[lines,assets] != df_final.iloc[lines-1,assets]:
-                    listofmostpickedassets[assets-2]=(listofmostpickedassets[assets-2][0],listofmostpickedassets[assets-2][1]+1)
-
-    print(listofmostpickedassets)
     return listofmostpickedassets
 
 
