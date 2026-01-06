@@ -34,11 +34,6 @@ df_global = Dfcleaning(ReadDf())
 try:
     # Data retrieval from yfinance
     intraday_data, seven_days, one_month, one_year, five_year = getInfoperTicker2(df_global, selected_ticker)
-    
-    # MultiIndex handling
-    for df in [intraday_data, seven_days, one_month, one_year, five_year]:
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
 
     current_price = float(one_month['Close'].iloc[-1])
     
