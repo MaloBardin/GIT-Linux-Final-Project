@@ -1,64 +1,73 @@
-
 .ticker-wrap {
-    width: 100%;
-    background-color: #262730;
-    overflow: hidden;
-    white-space: nowrap;
-    box-sizing: border-box;
-    padding: 10px 0;
-    margin-bottom: 20px;
-    border-top: 1px solid #444;
-    border-bottom: 1px solid #444;
+  width: 100%;
+  background-color: #262730;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
 }
 
 .ticker-move {
-    display: inline-block;
-    white-space: nowrap;
-    padding-left: 100%;
-    animation: ticker-animation 100s linear infinite;
+  display: inline-block;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: ticker-animation 100s linear infinite;
 }
 
 .ticker-item {
-    display: inline-block;
-    padding: 0 2rem;
-    font-size: 18px;
-    color: #23830f;
-    font-weight: bold;
-    font-family: 'Courier New', Courier, monospace;
+  display: inline-block;
+  padding: 0 2rem;
+  font-size: 18px;
+  color: #23830f;
+  font-weight: bold;
+  font-family: "Courier New", Courier, monospace;
 }
 
 @keyframes ticker-animation {
-    0% { transform: translate3d(0, 0, 0); }
-    100% { transform: translate3d(-100%, 0, 0); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+  }
 }
-
 
 .big-font-table {
-    width: 100%;
-    border-collapse: collapse;
-    border : none;
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
 }
 .big-font-table th {
-    font-size: 15px;
-    height : 50px;
-    text-align: center;
-    padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) ;
-    border-left: none !important;
-    border-right: none !important;
+  font-size: 15px;
+  height: 50px;
+  text-align: center;
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: none !important;
+  border-right: none !important;
 }
 
 .big-font-table td {
-    position: relative;
-    font-size: 15px;
-    padding: 10px;
-    height : 50px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) ;
-    cursor: pointer;
-    text-align: center;
-    border-left: none !important;
-    border-right: none !important;
+  position: relative;
+  font-size: 15px;
+  padding: 10px;
+  height: 50px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  text-align: center;
+  border-left: none !important;
+  border-right: none !important;
 }
 .big-font-table tr:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sub-container {
+  background-color: #13172200;
+  padding: 7px;
+  border-radius: 5px;
+  border: 1px solid #2a2e39;
 }

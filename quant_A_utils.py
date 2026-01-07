@@ -2,7 +2,8 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+from prophet import Prophet
+from statsmodels.tsa.arima.model import ARIMA
 
 
 
@@ -12,6 +13,9 @@ def get_data(ticker, start, end, interval):
     if isinstance(df.columns, pd.MultiIndex):
         df = df.xs(ticker, axis=1, level=1)
     return df[['Close']].copy()
+
+
+
 
 def risk_free_rate_conversion(rate, freq):
     if freq == "1d":
@@ -25,7 +29,18 @@ def risk_free_rate_conversion(rate, freq):
     else:
         rf_adjusted = 0
     return rf_adjusted
-
+def calculate_strategy_returns(df, risk_free_rate, freq, transaction_cost):
+    rf_adjusted = risk_free_rate_conversion(risk_free_rate, freq)
+    df['Return'] = df['Close'].pct_change().replace(np.nan, 0)
+    
+    df['Trade'] = df['Position'].diff().abs().replace(np.nan, 0.0)
+    df['Cost'] = df['Trade'] * transaction_cost
+    
+    df['Strategy_Return'] = (df['Position'] * df['Return'] + (1 - df['Position']) * rf_adjusted - df["Cost"]).replace(np.nan, 0)
+    
+    df["Strategy"] = ((1 + df['Strategy_Return']).cumprod() - 1) * 100
+    df["Asset_only"] = ((1 + df['Return']).cumprod() - 1) * 100
+    return df.dropna()
 
 def long_moving_average(df, freq,risk_free_rate = 0.05,transaction_cost=0.01, window=20  ):
     df = df.copy()
@@ -68,7 +83,47 @@ def double_moving_average(df,freq,risk_free_rate = 0.05,transaction_cost=0.01, w
     df["Asset_only"] = ((1 + df['Return']).cumprod() - 1) * 100
     return df.dropna()
 
+def bollinger_bands_strategy(df, freq, risk_free_rate=0.05, transaction_cost=0.01, window=20, num_std=2):
+    df = df.copy()
+    df['MA'] = df['Close'].rolling(window).mean()
+    df['STD'] = df['Close'].rolling(window).std()
+    df['Upper'] = df['MA'] + (df['STD'] * num_std)
+    df['Lower'] = df['MA'] - (df['STD'] * num_std)
+    
+    df['Signal'] = 0
+    df.loc[df['Close'] < df['Lower'], 'Signal'] = 1 
+    df.loc[df['Close'] > df['Upper'], 'Signal'] = -1
+    
+    df['Position'] = df['Signal'].replace(0, np.nan).ffill().replace(-1, 0).shift(1).fillna(0)
+    
+    return calculate_strategy_returns(df, risk_free_rate, freq, transaction_cost)
 
+def rsi_strategy(df, freq, risk_free_rate=0.05, transaction_cost=0.01, window=14, lower=30, upper=70):
+    df = df.copy()
+    delta = df['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    rs = gain / loss
+    df['RSI'] = 100 - (100 / (1 + rs))
+    
+    df['Signal'] = 0
+    df.loc[df['RSI'] < lower, 'Signal'] = 1
+    df.loc[df['RSI'] > upper, 'Signal'] = -1
+    
+    df['Position'] = df['Signal'].replace(0, np.nan).ffill().replace(-1, 0).shift(1).fillna(0)
+    
+    return calculate_strategy_returns(df, risk_free_rate, freq, transaction_cost)
+
+def macd_strategy(df, freq, risk_free_rate=0.05, transaction_cost=0.01, slow=26, fast=12, signal=9):
+    df = df.copy()
+    exp1 = df['Close'].ewm(span=fast, adjust=False).mean()
+    exp2 = df['Close'].ewm(span=slow, adjust=False).mean()
+    df['MACD'] = exp1 - exp2
+    df['Signal_Line'] = df['MACD'].ewm(span=signal, adjust=False).mean()
+    
+    df['Position'] = (df['MACD'].shift(1) > df['Signal_Line'].shift(1)).astype(int)
+    
+    return calculate_strategy_returns(df, risk_free_rate, freq, transaction_cost)
 def performance_metrics(df, risk_free_rate=0.0, periods_per_year=252):
     df = df.copy()
 
@@ -100,43 +155,46 @@ def performance_metrics(df, risk_free_rate=0.0, periods_per_year=252):
         'Number of Trades': trades
     }
 
+def predict_future_only(df, days=30):
+    df_prophet = df.reset_index()[['Date', 'Close']]
+    df_prophet.columns = ['ds', 'y']
+    df_prophet['ds'] = df_prophet['ds'].dt.tz_localize(None)
+    
+    m = Prophet()
+    m.fit(df_prophet)
+    
+    future = m.make_future_dataframe(periods=days)
+    forecast = m.predict(future)
+    
+    return forecast.tail(days)
 
 
+def predict_arima(df, days=30):
+    model = ARIMA(df['Close'], order=(5, 1, 0))
+    model_fit = model.fit()
+    
+    forecast_result = model_fit.get_forecast(steps=days)
+    forecast_df = forecast_result.summary_frame()
+    
+    last_date = df.index[-1]
+    future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=days)
+    
+    result = pd.DataFrame({
+        'ds': future_dates,
+        'yhat': forecast_df['mean'].values,
+        'yhat_lower': forecast_df['mean_ci_lower'].values,
+        'yhat_upper': forecast_df['mean_ci_upper'].values
+    })
+    return result
 
 if __name__ == "__main__":
     TICKER = "GC=F"
     START = "2020-01-01"
     END = "2025-01-01"
     INTERVAL = "1d"
-    WINDOW = 100
+    
     data = get_data(TICKER, START, END, INTERVAL)
-
-
-    ret = long_moving_average(data, WINDOW)
-
-    plt.figure(figsize=(10, 5))
-
-    plt.plot(ret['Asset_only'], label='Price (normalized)')
-    plt.plot(ret['Strategy'], label='Cumulative Strategy')
-
-
-
-
-    plt.title("Strategie Mean Return - Points d'achat")
-    plt.legend()
-    plt.show()
-
-    metrics = performance_metrics(ret)
-    print(metrics)
-
-
-    # 3. Affichage des Métriques (Console)
-    #sharpe_h, dd_h = calculate_metrics(results['Strat_Hold'])
-    #sharpe_m, dd_m = calculate_metrics(results['Strat_Momentum'])
-
-
-    print(f"MÉTRIQUES ({START} à aujourd'hui)")
-
-    #print(f"Buy & Hold -> Sharpe: {sharpe_h:.2f} | Max Drawdown: {dd_h:.2%}")
-    #print(f"Momentum   -> Sharpe: {sharpe_m:.2f} | Max Drawdown: {dd_m:.2%}")
-
+    
+    future_forecast = predict_future_only(data, days=30)
+    
+    print(future_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']])
