@@ -36,11 +36,11 @@ def load_tickers(filename="tickers.json"):
 st.set_page_config(layout="wide")
 
 #Header
-with st.container(border=True):
+with st.container(border=False):
     col_title, col_info = st.columns([100, 5])
     with col_title:
         st.markdown("""
-            <h1 style='text-align: center; font-size: 30px; margin-bottom: 0px;'>
+            <h1 style='text-align: center; font-size: 30px; margin-bottom: 0px; padding : 0px'>
                 Quant A : Single Asset Management
             </h1>
         """, unsafe_allow_html=True)
@@ -92,7 +92,7 @@ with col_right:
 
 
 with col_left:
-    with st.container(border=True):
+    with st.container(border=False):
         if True:
             start_date_str = start_date.strftime("%Y-%m-%d")
             end_date_str = end_date.strftime("%Y-%m-%d")
