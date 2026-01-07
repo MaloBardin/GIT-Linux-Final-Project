@@ -83,6 +83,7 @@ with col_droite:
                 RunBacktest(hold_param, hist_param, numberviews_param, confidence_param,DynamicLambda)
                 st.success("✅ Backtest finished !")
                 import time
+                st.session_state.mes_actifs_key = []
                 time.sleep(0.5)
                 st.rerun()
 
@@ -151,7 +152,8 @@ with col_gauche:
         selection = st.multiselect(
             "📈 Display components of the Cac40 (⚠️ this will not have an impact on the composition of the portfolio since everything is automated)",
             options=oAssetColumns,
-            default=None  # Tout coché par défaut
+            default=None,
+            key = "mes_actifs_key"
         )
 
 
@@ -226,7 +228,7 @@ with col_btn:
 if start_multirun:
     my_bar = st.progress(0, text="Preparing simulations...")
 
-    with st.spinner("Work in progress, please wait..."):
+    with st.spinner("Work in progress, the best simulation will be displayed in green, please wait..."):
         multirundf = multirun(dfprice, n_simulations=nb_runs, progress_bar=my_bar)
     st.toast("Simulations are finished !", icon="🏁")
     my_bar.empty()
