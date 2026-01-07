@@ -3,15 +3,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from grabbing_dataframe import Dfcleaning, ReadDf, getInfoperTicker2
-
+from mailsending import sendmail, bulknl
+print("EEEN COURS")
 st.set_page_config(layout="wide", page_title="Ticker Analysis")
-
+sendmail("malo.bardin@gmail.com", "j'aime beaucoup le projet", "C'est vraiment un super projet")
+print("DONNNNEEEE")
 def local_css(file_name):
     try:
         with open(file_name) as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     except FileNotFoundError:
         pass
+
+
 
 local_css("style.css")
 
