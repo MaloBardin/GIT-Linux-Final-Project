@@ -88,7 +88,7 @@ with col_droite:
                 st.rerun()
 
 
-    with st.container(border=False):
+    with st.container(border=True):
         dfprice=pd.read_csv('data3y.csv')
         df_corr = getCorrelationMatrix(dfprice,dfprice['Date'].iloc[-1],22*hist_param)
         fig_corr = px.imshow(
@@ -105,7 +105,7 @@ with col_droite:
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
-        st.plotly_chart(fig_corr, width="stretch", config={"staticPlot": True})
+        st.plotly_chart(fig_corr, width="stretch")
 
         #metrics infos
         st.subheader("📉 Risk Metrics")
@@ -130,9 +130,14 @@ with col_droite:
             st.metric("VaR 99%", f"{var_es_spx['VaR']:.2%}")
             st.metric("ES 99%", f"{var_es_spx['ES']:.2%}")
             st.metric("Sharpe Ratio", f"{sharpe_spx:.2f}")
-    with st.container(border=False):
-        st.write("**Force data refresh**")
-        if st.button("Refresh data", use_container_width=True):
+    with st.container(border=True):
+        import os
+        import datetime
+        st.write("**Refresh the data (auto refresh every day)**")
+        file_time = os.path.getmtime('data3y.csv')
+        last_date = datetime.datetime.fromtimestamp(file_time).strftime('%d/%m/%Y at %H:%M')
+        st.caption(f"📅 Last update : **{last_date}**")
+        if st.button("Get the new data !", use_container_width=True):
             with st.spinner('⏳ Refreshing data, please wait...'):
                 runEveryDay()
                 st.success("✅ Data refreshed !")
@@ -141,7 +146,7 @@ with col_droite:
                 st.rerun()
 #graph
 with col_gauche:
-    with st.container(border=False):
+    with st.container(border=True):
         oAssetColumns = [
     "AI.PA", "AIR.PA", "ALO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
     "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
@@ -157,7 +162,7 @@ with col_gauche:
         )
 
 
-    with st.container(border=False):
+    with st.container(border=True):
         df_chart = getPrintableDf(df_backtest,df_3ydata,selection)
         fix = px.line(
             df_chart,
@@ -165,15 +170,14 @@ with col_gauche:
             y="Évolution en %",
             color="Série",
             color_discrete_map={"Cac40": "red", "Portfolio": "green"},
-            title="Comparaison of the Black-Litterman Portfolio vs Cac40"
-        )
+            title="Comparaison of the Black-Litterman Portfolio")
 
         fix.update_layout(hovermode="x unified")
 
-        st.plotly_chart(fix, width="stretch", config={"staticPlot": True})
+        st.plotly_chart(fix, width="stretch")
 
 
-    with st.container(border=False):
+    with st.container(border=True):
         data_tuples = GetInfoOnBacktest(df_backtest)
         df_histo = pd.DataFrame(data_tuples, columns=["Actif", "Fréquence"])
         df_histo = df_histo.sort_values(by="Fréquence", ascending=False)
@@ -194,42 +198,42 @@ with col_gauche:
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
-        st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
+        st.plotly_chart(fig, width="stretch")
+    with st.container(border=True):
+        data_toplot=dailyvol(df_backtest)
+        fig = px.line(data_toplot,
+                      x=data_toplot.index,
+                      y=["annualizedvolCac40", "annualizedVolPf"],
+                      labels={"value": "annualized vol", "variable": "Actif", "Date": "Date"},
+                      title="Annualized volatility")
 
-    data_toplot=dailyvol(df_backtest)
-    fig = px.line(data_toplot,
-                  x=data_toplot.index,
-                  y=["annualizedvolCac40", "annualizedVolPf"],
-                  labels={"value": "annualized vol", "variable": "Actif", "Date": "Date"},
-                  title="annualized vol : Cac40 vs Portfolio")
+        st.plotly_chart(fig, width="stretch")
+    with st.container(border=True):
+        fig, mdd, start, end = plot_max_drawdown(df_backtest)
+        st.plotly_chart(fig, width="stretch")
 
-    st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
-
-    fig, mdd, start, end = plot_max_drawdown(df_backtest)
-    st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
-
-    st.error(f"📉 **Maximum Drawdown :** {mdd:.2%}")
-    st.info(f"⏱️ **Drop and recovery duration :** {(end - start).days} days")
+        st.error(f"📉 **Maximum Drawdown :** {mdd:.2%}")
+        st.info(f"⏱️ **Drop and recovery duration :** {(end - start).days} days")
 
 st.divider()
 st.subheader("🔃 Multi-Run Simulation")
+with st.container(border=True):
+    st.info("This section is used to run multiple backtest with mooving starting date to verify that the Black and Litterman model is not path dependant. It take the same parameters as the backtest above, please be patient.")
+    col_input, col_btn = st.columns([1, 2])
 
-st.info("This section is used to run multiple backtest with mooving starting date to verify that the Black and Litterman model is not path dependant. It take the same parameters as the backtest above, please be patient.")
-col_input, col_btn = st.columns([1, 2])
+    with col_input:
+        nb_runs = st.number_input("Simulations number",min_value=1,max_value=50,value=5,step=1,help="The larger the number is, the longer the code will take to compute")
 
-with col_input:
-    nb_runs = st.number_input("Simulations number",min_value=1,max_value=50,value=5,step=1,help="The larger the number is, the longer the code will take to compute")
+    with col_btn:
+        st.write("")
+        st.write("")
+        start_multirun = st.button("🚀 Launch Multi-Run", type="primary")
 
-with col_btn:
-    st.write("")
-    st.write("")
-    start_multirun = st.button("🚀 Launch Multi-Run", type="primary")
+    if start_multirun:
+        my_bar = st.progress(0, text="Preparing simulations...")
 
-if start_multirun:
-    my_bar = st.progress(0, text="Preparing simulations...")
-
-    with st.spinner("Work in progress, the best simulation will be displayed in green, please wait..."):
-        multirundf = multirun(dfprice, n_simulations=nb_runs, progress_bar=my_bar)
-    st.toast("Simulations are finished !", icon="🏁")
-    my_bar.empty()
-    plot_multirun_static(multirundf)
+        with st.spinner("Work in progress, the best simulation will be displayed in green, please wait..."):
+            multirundf = multirun(dfprice, n_simulations=nb_runs, progress_bar=my_bar)
+        st.toast("Simulations are finished !", icon="🏁")
+        my_bar.empty()
+        plot_multirun_static(multirundf)
