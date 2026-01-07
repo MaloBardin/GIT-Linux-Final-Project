@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from VVE import getPrintableDf,GetDf
-from VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,animate_dataframe_plotly,plot_max_drawdown
+from VVE import getPrintableDf,GetDf,runEveryDay
+from VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,plot_multirun_static,plot_max_drawdown
 import plotly.express as px
+import warnings
+warnings.filterwarnings("ignore")
+import time
 
 st.set_page_config(layout="wide")
 
@@ -55,9 +58,8 @@ with col_info:
 
 col_gauche, col_droite = st.columns([3, 1], gap="medium")
 
-
 df_backtest=pd.read_csv('backtest_bl.csv')
-
+df_3ydata=pd.read_csv('data3y.csv')
 #sliders
 with col_droite:
     with st.container(border=True):
@@ -102,8 +104,7 @@ with col_droite:
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
-        st.plotly_chart(fig_corr,config={'staticPlot': True}, use_container_width=True)
-
+        st.plotly_chart(fig_corr, width="stretch", config={"staticPlot": True})
 
         #metrics infos
         st.subheader("📉 Risk Metrics")
@@ -124,33 +125,50 @@ with col_droite:
             st.metric("Sharpe Ratio", f"{sharpe_pf:.2f}")
 
         with col2:
-            st.markdown("#### 📊 \t Cac 40")
+            st.markdown("#### 📊 &nbsp; &nbsp; Cac40")
             st.metric("VaR 99%", f"{var_es_spx['VaR']:.2%}")
             st.metric("ES 99%", f"{var_es_spx['ES']:.2%}")
             st.metric("Sharpe Ratio", f"{sharpe_spx:.2f}")
-
+    with st.container(border=False):
+        st.write("**Force data refresh**")
+        if st.button("Refresh data", use_container_width=True):
+            with st.spinner('⏳ Refreshing data, please wait...'):
+                runEveryDay()
+                st.success("✅ Data refreshed !")
+                import time
+                time.sleep(0.1)
+                st.rerun()
 #graph
 with col_gauche:
+    with st.container(border=False):
+        oAssetColumns = [
+    "AI.PA", "AIR.PA", "ALO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
+    "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
+    "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
+    "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
+    "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]
+
+        selection = st.multiselect(
+            "📈 Display components of the Cac40 (⚠️ this will not have an impact on the composition of the portfolio since everything is automated)",
+            options=oAssetColumns,
+            default=None  # Tout coché par défaut
+        )
+
 
     with st.container(border=False):
-        df_chart = getPrintableDf(df_backtest)
-
+        df_chart = getPrintableDf(df_backtest,df_3ydata,selection)
         fix = px.line(
             df_chart,
             x="Date",
             y="Évolution en %",
             color="Série",
             color_discrete_map={"Cac40": "red", "Portfolio": "green"},
-            title="Comparaison of the Black-Litterman Portfolio vs Cac40 in %"
+            title="Comparaison of the Black-Litterman Portfolio vs Cac40"
         )
 
         fix.update_layout(hovermode="x unified")
 
-        st.plotly_chart(
-            fix,
-            use_container_width=True,
-            config={'staticPlot': True}
-        )
+        st.plotly_chart(fix, width="stretch", config={"staticPlot": True})
 
 
     with st.container(border=False):
@@ -174,8 +192,7 @@ with col_gauche:
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
-
-        st.plotly_chart(fig,config={'staticPlot': True}, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
 
     data_toplot=dailyvol(df_backtest)
     fig = px.line(data_toplot,
@@ -184,10 +201,10 @@ with col_gauche:
                   labels={"value": "annualized vol", "variable": "Actif", "Date": "Date"},
                   title="annualized vol : Cac40 vs Portfolio")
 
-    st.plotly_chart(fig, config={'staticPlot': True}, use_container_width=True)
+    st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
 
     fig, mdd, start, end = plot_max_drawdown(df_backtest)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
 
     st.error(f"📉 **Maximum Drawdown :** {mdd:.2%}")
     st.info(f"⏱️ **Drop and recovery duration :** {(end - start).days} days")
@@ -207,7 +224,10 @@ with col_btn:
     start_multirun = st.button("🚀 Launch Multi-Run", type="primary")
 
 if start_multirun:
-    with st.spinner(f"⏳Running {nb_runs} simulations. Please wait..."):
-        multirundf = multirun(df_backtest, n_simulations=nb_runs)
-        st.toast("Simulation is finished!", icon="🏁")
-        animate_dataframe_plotly(multirundf)
+    my_bar = st.progress(0, text="Preparing simulations...")
+
+    with st.spinner("Work in progress, please wait..."):
+        multirundf = multirun(dfprice, n_simulations=nb_runs, progress_bar=my_bar)
+    st.toast("Simulations are finished !", icon="🏁")
+    my_bar.empty()
+    plot_multirun_static(multirundf)
