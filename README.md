@@ -16,4 +16,9 @@ TODO :
 5. Bloomberg data retrieval : code to retrieve data on a CSV
 
 
+Deployment : 
+
+docker build --no-cache -t my-streamlit-app .
+docker run -p 8501:8501 my-streamlit-app
+
 
