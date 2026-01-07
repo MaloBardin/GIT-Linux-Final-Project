@@ -210,6 +210,4 @@ if start_multirun:
     with st.spinner(f"⏳Running {nb_runs} simulations. Please wait..."):
         multirundf = multirun(df_backtest, n_simulations=nb_runs)
         st.toast("Simulation is finished!", icon="🏁")
-
-if "multirun_data" in st.session_state:
-    animate_dataframe_plotly(multirundf)
+        animate_dataframe_plotly(multirundf)

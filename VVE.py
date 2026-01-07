@@ -647,7 +647,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-def animate_dataframe_plotly(df,step=5,speed=20,spx_col="Cac40"):
+def animate_dataframe_plotly(df,step=5,speed=20,spx_col="dontwork"):
 
     df_anim = df.iloc[::step]
     x = df_anim.index
@@ -666,7 +666,7 @@ def animate_dataframe_plotly(df,step=5,speed=20,spx_col="Cac40"):
             width = 2
             alpha = 1
         else:
-            color = "rgba(250, 250, 250,1)"
+            color = "rgba(150, 150, 150, 0.7)"
             width = 1
             alpha = 0.4
         traces.append(go.Scatter(x=[],y=[],mode="lines",line=dict(color=color, width=width),opacity=alpha,name=col,showlegend=False))
