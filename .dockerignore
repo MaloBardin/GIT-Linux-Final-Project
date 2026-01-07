@@ -1,0 +1,15 @@
+.git
+__pycache__
+*.pyc
+.env
+.venv
+venv
+node_modules
+data
+datasets
+
+
+*.parquet
+*.xlsx
+*.zip
+*.tar
