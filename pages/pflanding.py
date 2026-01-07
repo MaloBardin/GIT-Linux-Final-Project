@@ -12,6 +12,53 @@ st.set_page_config(layout="wide")
 
 if "backtest_clicked" not in st.session_state:
     st.session_state.backtest_clicked = False
+@st.dialog("📬 Keep track of the market")
+def show_newsletter_popup():
+    st.write(
+        "Join our mailing list to receive daily portfolio reports directly in your inbox.")
+
+    with st.form("newsletter_form"):
+        email = st.text_input("Enter your email address", placeholder="malo@adam.fr")
+        submit_btn = st.form_submit_button("Subscribe Now")
+
+        if submit_btn:
+            if email and "@" in email:
+                file_path = "subscribers.txt"
+
+                email_exists = False
+                if os.path.exists(file_path):
+                    with open(file_path, "r") as f:
+                        if email in f.read():
+                            email_exists = True
+
+                if not email_exists:
+                    with open(file_path, "a") as f:
+                        f.write(f"{email}\n")
+                    st.success("Success! You'll receive our next daily report tomorrow, see you then !")
+
+                else:
+                    st.warning("You are already subscribed!")
+            else:
+                st.error("Please enter a valid email address.")
+
+def barre_menu():
+    col1, col2,col3,col4,col6= st.columns(5)
+    with col1:
+        st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
+    with col2:
+        st.page_link("pages/pflanding.py", label="Portfolio simulation", use_container_width=True)
+    with col3:
+        st.page_link("pages/ticker_page.py", label="Ticker page", use_container_width=True)
+
+    with col6:
+        if st.button("📩 Subscribe to the daily report !", use_container_width=True):
+            show_newsletter_popup()
+
+
+st.set_page_config(page_title="", layout="wide")
+barre_menu()
+
+
 
 @st.dialog("The Black-Litterman Model")
 def show_bl_info():
