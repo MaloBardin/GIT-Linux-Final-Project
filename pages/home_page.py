@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import math
 from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf, getDfForGraph, GetDf
+from pflanding import show_newsletter_popup
 
 #setup
 query_params = st.query_params
@@ -12,10 +13,11 @@ def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-
 local_css("style.css")
 
-def barre_menu():
+
+
+def barre_menu(): #navigation bar
     col1, col2,col3,col4,col6= st.columns(5)
     with col1:
         st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
@@ -28,9 +30,13 @@ def barre_menu():
     with col6:
         if st.button("📩 Subscribe to the daily report !", use_container_width=True):
             show_newsletter_popup()
-
-
 barre_menu()
+
+
+#newsltter popup
+
+
+
 
 # graph generation
 def generate_sparkline(data):
@@ -102,6 +108,8 @@ worst_performer = df_total.loc[df_total['Return_1d'].idxmin()]
 avg_return = df_total['Return_1d'].mean()
 avg_color = "metric-delta-pos" if avg_return >= 0 else "metric-delta-neg"
 
+
+#html for the best and worst stock of the day !
 st.markdown(f"""
 <div class="metric-container">
     <div class="metric-card">
@@ -122,11 +130,11 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-
+#parameters for search and sort
 col_search, col_sort = st.columns([3, 1])
 
 with col_search:
-    search_query = st.text_input("🔍 Search Ticker", placeholder="...", label_visibility="collapsed")
+    search_query = st.text_input("🔍 Search Ticker", placeholder="🔍 Search Ticker", label_visibility="collapsed")
 
 with col_sort:
     sort_option = st.selectbox("Sort by", ["Price Desc", "Price Asc", "Return 1D Desc", "Return 1D Asc" ], label_visibility="collapsed")
@@ -161,9 +169,8 @@ current_page = st.session_state.page_number + 1
 
 table_container = st.container(border=True)
 
-
+#navigation for the pages of the table
 col1, col2, col3 = st.columns([1, 2, 1])
-
 with col1:
     if st.button("Previous", disabled=(st.session_state.page_number == 0), use_container_width=True):
         st.session_state.page_number -= 1
@@ -182,11 +189,12 @@ with col3:
         st.session_state.page_number += 1
         st.rerun()
 
-
 start_index = st.session_state.page_number * ROWS_PER_PAGE
 end_index = start_index + ROWS_PER_PAGE
 
 df_page = df_total.iloc[start_index:end_index].copy()
+
+
 
 #graph data preparation
 df_graph = getDfForGraph(Dfcleaning(ReadDf()))
@@ -209,7 +217,7 @@ if current_rows_on_page < ROWS_PER_PAGE:
     df_page = pd.concat([df_page, empty_df], ignore_index=True)
 
 
-def color_volatility(val):
+def color_volatility(val): #color of the vol
     if not isinstance(val, (int, float)):
         return ''
     if val < 30:
@@ -221,7 +229,7 @@ def color_volatility(val):
     return f'color: {color};'
 
 
-def color_price(val):
+def color_price(val): #swap the color if negative or positive return
     if not isinstance(val, (int, float)):
         return ''
     if val > 0:
@@ -233,7 +241,7 @@ def color_price(val):
     return f'color: {color}; '
 
 
-def make_clickable(row):
+def make_clickable(row): #make the button clickable to be able to open the associated page
     if not row['Ticker']:
         row['Button'] = ""
         return row
@@ -248,7 +256,7 @@ def make_clickable(row):
     return row
 
 
-#table display logic
+#BIG BIG TABLE DISPLAY
 cols_order = ['Ticker', 'Price', 'Return_1d', 'Return_7d', 'Return_30d', 'Graph', 'Button']
 cols_present = [c for c in cols_order if c in df_page.columns]
 df_display = df_page[cols_present].copy()
@@ -257,15 +265,12 @@ df_display = df_display.apply(make_clickable, axis=1)
 
 styled_df = df_display.style
 
-#colors
 styled_df = styled_df.map(
     color_price,
     subset=['Return_1d', 'Return_7d', 'Return_30d']
 )
-
 returnsformat = ['Return_1d', 'Return_7d', 'Return_30d']
 
-#We replace NaN by empty string for better display
 styled_df = styled_df.format(lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else "", subset=[c for c in returnsformat if c in df_display.columns])
 styled_df = styled_df.format(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else "", subset=['Price'])
 
@@ -278,24 +283,20 @@ with table_container:
     st.markdown(html_table, unsafe_allow_html=True)
     st.write("")
 
-
+#REPORT GENERATION, WE DID IT HERE SINCE WE HAVE ALL THE DATA LOADED ALREADY
 def generatereport():
     from datetime import datetime
-    import pandas as pd
-    import numpy as np
-
-    # --- 1. LOGIQUE & DONNÉES ---
+    #logic part
     today_date = datetime.now().strftime("%d %B %Y")
 
-    # Chargement
+    #read csv
     df_total = pd.read_csv("data3y.csv")
 
-    if 'Date' in df_total.columns:
-        df_total = df_total.set_index('Date')
+    if "Date" in df_total.columns:
+        df_total = df_total.set_index("Date")
 
-    # --- CORRECTION 1 : On prend TOUTES les colonnes (pas de limite [:10]) ---
+    #load the same table on one page and remove go button
     tickers_to_display = df_total.columns
-
     table_data = []
     for ticker in tickers_to_display:
         prices = df_total[ticker].dropna()
@@ -321,7 +322,7 @@ def generatereport():
             "History": history_30d
         })
 
-    # Calcul Top/Flop/Market pour le haut
+    #display the best and worst performer of today and a graph data
     df_returns_1d = df_total.pct_change().iloc[-1]
     best_ticker_name = df_returns_1d.idxmax()
     worst_ticker_name = df_returns_1d.idxmin()
@@ -330,7 +331,6 @@ def generatereport():
     best_val = df_returns_1d.max() * 100
     worst_val = df_returns_1d.min() * 100
 
-    # Graphique Principal (21 jours)
     market_name = '^FCHI'
     if market_name not in df_total.columns: market_name = df_total.columns[0]
 
@@ -344,10 +344,10 @@ def generatereport():
     val_best = normalize(df_last_21[best_ticker_name]).fillna(0).tolist()
     val_worst = normalize(df_last_21[worst_ticker_name]).fillna(0).tolist()
 
-    # --- SVG GENERATOR ---
+    #html part, we used AI assistance to generate the html structure and style since we are not experts in web design
     def make_sparkline_svg(data):
         if not data: return ""
-        width, height = 100, 30  # Hauteur un peu réduite
+        width, height = 100, 30
         min_v, max_v = min(data), max(data)
         rng = max_v - min_v if max_v != min_v else 1
 
@@ -360,8 +360,7 @@ def generatereport():
         color = "#29f075" if data[-1] >= data[0] else "#CC4974"
         return f'<svg width="{width}" height="{height}" style="background:transparent"><polyline points="{" ".join(points)}" fill="none" stroke="{color}" stroke-width="2"/></svg>'
 
-    # --- CORRECTION 2 : TABLEAU HTML ---
-    # Suppression de la colonne "Action" et style clair
+
     table_rows_html = ""
     for row in table_data:
         c_1d = "#29f075" if row['Return_1d'] >= 0 else "#CC4974"
@@ -370,7 +369,6 @@ def generatereport():
 
         sparkline_svg = make_sparkline_svg(row['History'])
 
-        # Note le style: font-weight bold mais couleur normale (pas blanche)
         table_rows_html += f"""
         <tr>
             <td style="font-weight:bold; color: #2d2d2d;">{row['Ticker']}</td>
@@ -382,7 +380,6 @@ def generatereport():
         </tr>
         """
 
-    # --- HTML COMPLET ---
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -535,9 +532,4 @@ def generatereport():
 
 
  # to test
-st.download_button(
-    label="📥 Télécharger ce résumé",
-    data=generatereport(),
-    file_name="market_summary.html",
-    mime="text/html"
-)
+#st.download_button(label="bouton test",data=generatereport(),file_name="market_summary.html",mime="text/html")
