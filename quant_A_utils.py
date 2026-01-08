@@ -6,17 +6,6 @@ from prophet import Prophet
 from statsmodels.tsa.arima.model import ARIMA
 
 
-
-def get_data(ticker, start, end, interval):
-    df = yf.download(ticker, start=start, end=end, interval=interval)
-    #df = yf.download("BNP.PA", period='3y', interval='1d')
-    if isinstance(df.columns, pd.MultiIndex):
-        df = df.xs(ticker, axis=1, level=1)
-    return df[['Close']].copy()
-
-
-
-
 def risk_free_rate_conversion(rate, freq):
     if freq == "1d":
         rf_adjusted = rate / 252
@@ -124,6 +113,8 @@ def macd_strategy(df, freq, risk_free_rate=0.05, transaction_cost=0.01, slow=26,
     df['Position'] = (df['MACD'].shift(1) > df['Signal_Line'].shift(1)).astype(int)
     
     return calculate_strategy_returns(df, risk_free_rate, freq, transaction_cost)
+
+
 def performance_metrics(df, risk_free_rate=0.0, periods_per_year=252):
     df = df.copy()
 
@@ -135,11 +126,13 @@ def performance_metrics(df, risk_free_rate=0.0, periods_per_year=252):
     downside_risk = downside_returns.std() * np.sqrt(periods_per_year)
     sortino = (df['Strategy_Return'].mean() * periods_per_year - risk_free_rate) / downside_risk
 
-    df['Rolling_Max'] = df['Strategy'].cummax()
-    drawdown = df['Strategy'] / df['Rolling_Max'] - 1
+    equity_curve = (1 + df['Strategy_Return']).cumprod()
+    rolling_max = equity_curve.cummax()
+    drawdown = equity_curve / rolling_max - 1
     max_drawdown = drawdown.min()
+
     n_years = len(df) / periods_per_year
-    CAGR = (df['Strategy'].iloc[-1]) ** (1 / n_years) - 1
+    CAGR = (equity_curve.iloc[-1]) ** (1 / n_years) - 1
 
     win_rate = (df['Strategy_Return'] > 0).mean()
 
@@ -187,14 +180,4 @@ def predict_arima(df, days=30):
     })
     return result
 
-if __name__ == "__main__":
-    TICKER = "GC=F"
-    START = "2020-01-01"
-    END = "2025-01-01"
-    INTERVAL = "1d"
-    
-    data = get_data(TICKER, START, END, INTERVAL)
-    
-    future_forecast = predict_future_only(data, days=30)
-    
-    print(future_forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']])
+

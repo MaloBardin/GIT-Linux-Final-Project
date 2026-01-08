@@ -1,42 +1,20 @@
 import streamlit as st
 import pandas as pd
 import math
-from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf, getDfForGraph, GetDf
+from grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph, GetDf
 from mailsending import show_newsletter_popup,callforlinux
+from utils import local_css, barre_menu
 #callforlinux()
 #setup
 query_params = st.query_params
-st.set_page_config(layout="wide")
-
-
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 local_css("style.css")
-
-
-
-def barre_menu(): #navigation bar
-    col1, col2,col3,col4,col6= st.columns(5)
-    with col1:
-        st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
-    with col2:
-        st.page_link("pages/quant_A_page.py", label="Single Asset", use_container_width=True)
-        
-    with col3:
-        st.page_link("pages/pflanding.py", label="Portfolio simulation", use_container_width=True)
-
-    with col6:
-        if st.button("📩 Subscribe to the daily report !", use_container_width=True):
-            show_newsletter_popup()
 barre_menu()
-
 
 #newsltter popup
 
 
-
+st.set_page_config(layout="wide")
 
 # graph generation
 def generate_sparkline(data):
@@ -67,7 +45,7 @@ def generate_sparkline(data):
 
 
 #header
-df_total = GetDfForDashboard(Dfcleaning(ReadDf()))
+df_total = GetDfForDashboard(Dfclean(ReadDfMax()))
 
 df2 = df_total.copy()
 formatted_list = []
@@ -197,7 +175,7 @@ df_page = df_total.iloc[start_index:end_index].copy()
 
 
 #graph data preparation
-df_graph = getDfForGraph(Dfcleaning(ReadDf()))
+df_graph = getDfForGraph(Dfclean(ReadDfMax()))
 
 def get_history_list(ticker_name):
     if ticker_name in df_graph.columns:
@@ -241,12 +219,12 @@ def color_price(val): #swap the color if negative or positive return
     return f'color: {color}; '
 
 
-def make_clickable(row): #make the button clickable to be able to open the associated page
+def make_clickable(row):
     if not row['Ticker']:
         row['Button'] = ""
         return row
     ticker_value = row['Ticker']
-    page_url = "/ticker_page"
+    page_url = "quant_A_page"
     row["Button"] = (
         f'<a target="_self" href="{page_url}?ticker={ticker_value}" '
         f'style="text-decoration: none; color: inherit; font-weight: bold; display: block; padding: 10px;">'

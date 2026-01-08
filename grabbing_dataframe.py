@@ -2,11 +2,40 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, timedelta
 import streamlit as st
+import os
 
+FILE_NAME = "cac40_history.csv"
+cac40 = [
+        '^FCHI', 'AI.PA', 'AIR.PA', 'ALO.PA', 'BN.PA', 'BNP.PA', 'CA.PA',
+        'CAP.PA', 'CS.PA', 'DG.PA', 'DSY.PA', 'EL.PA', 'EN.PA', 'ENGI.PA',
+        'ERF.PA', 'GLE.PA', 'HO.PA', 'KER.PA', 'LR.PA', 'MC.PA', 'ML.PA',
+        'OR.PA', 'ORA.PA', 'PUB.PA', 'RCO.PA', 'RI.PA', 'RMS.PA', 'SAF.PA',
+        'SAN.PA', 'SGO.PA', 'STMPA.PA', 'SU.PA', 'TEP.PA',
+        'TTE.PA', 'VIE.PA', 'VIV.PA', 'WLN.PA'
+    ]
+
+def UpdateDfMax():
+
+    df = yf.download(cac40, period='max', interval='1d')['Close']
+    df = df.reset_index()
+    df.rename(columns={'^FCHI': 'Cac40'}, inplace=True)
+    cols = [c for c in df.columns if c not in ['Date', 'Cac40']]
+    df = df[['Date', 'Cac40'] + cols]
+    
+    df = df.drop_duplicates(subset=['Date'])
+    df.to_csv(FILE_NAME, index=False)
+    
+    return df
 
 @st.cache_data
+def ReadDfMax():
+    df = pd.read_csv(FILE_NAME)
+    df['Date'] = pd.to_datetime(df['Date'])
+    return df
+
+
 def GetDf():
     # tickers cac40
     cac40 = [
@@ -76,6 +105,13 @@ def Dfcleaning(df):
     df=df.ffill()
     df["Date"]=pd.to_datetime(df['Date'])
     df = df.rename(columns=name_map)
+    return df
+
+
+@st.cache_data
+def Dfclean(df):
+    df=df.ffill()
+    df["Date"]=pd.to_datetime(df['Date'])
 
     return df
 
@@ -192,3 +228,12 @@ def getDfForGraph(df, dayforgraphlookback=30):
     return graph_df
 
 
+@st.cache_data
+def get_data(ticker, start, end):
+    df = ReadDfMax()
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.set_index('Date')
+    df = df[(df.index >= start) & (df.index < end)]
+    df = df[[ticker]].copy()
+    df.columns = ['Close']
+    return df

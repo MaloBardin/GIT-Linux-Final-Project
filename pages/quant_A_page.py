@@ -4,10 +4,9 @@ import datetime as dt
 import plotly.graph_objects as go
 import json
 import os
-
+from grabbing_dataframe import get_data
 
 from quant_A_utils import (
-    get_data,
     long_moving_average,
     double_moving_average,
     bollinger_bands_strategy,
@@ -18,37 +17,13 @@ from quant_A_utils import (
     predict_arima
 )
 from mailsending import show_newsletter_popup
+from utils import local_css, barre_menu
 
-
-def local_css(file_name):
-    try:
-        with open(file_name) as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        pass
 
 local_css("style.css")
-
-def barre_menu():
-    col1, col2,col3,col4,col6= st.columns(5)
-    with col1:
-        st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
-    with col2:
-        st.page_link("pages/quant_A_page.py", label="Single Asset", use_container_width=True)
-        
-    with col3:
-        st.page_link("pages/pflanding.py", label="Portfolio simulation", use_container_width=True)
-
-    with col6:
-        if st.button("📩 Subscribe to the daily report !", use_container_width=True):
-            show_newsletter_popup()
-
-
 barre_menu()
 
 def load_tickers(filename="tickers.json"):
-    if not os.path.exists(filename):
-        return {"AAPL": "Apple Inc.", "TSLA": "Tesla", "GC=F": "Gold", "^FCHI": "CAC 40"}
     with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -76,13 +51,34 @@ with col_right:
 
         ticker_map = load_tickers()
         display_options = {f"{name} ({ticker})": ticker for ticker, name in ticker_map.items()}
-        
-        selected_label = st.selectbox("Select Asset", options=list(display_options.keys()))
+        options_list = list(display_options.keys())
+
+        if "selected_asset_label" not in st.session_state:
+            st.session_state.selected_asset_label = options_list[0] 
+
+        if "ticker" in st.query_params:
+            query_ticker = st.query_params["ticker"]
+            print("query ticker : ", query_ticker)
+            found_label = next((k for k, v in display_options.items() if v == query_ticker), None)
+            
+            if found_label:
+                st.session_state.selected_asset_label = found_label
+            
+            st.query_params.clear()
+
+        selected_label = st.selectbox(
+            "Select Asset", 
+            options=options_list, 
+            key="selected_asset_label" 
+        )
+
         ticker = display_options[selected_label]
         start_date = st.date_input("Start", value=dt.date(2023, 1, 1))
         end_date = st.date_input("End", value=dt.date(2025, 1, 1))
-
-        interval = st.selectbox("Interval", ["1h", "1d", "1wk", "1mo"], index=1)
+        if start_date >= end_date:
+            st.error("Error: End date must fall after start date.")
+            st.stop()
+        interval = "1d"
 
         risk_free_rate = st.slider("Risk Free rate (%)", 0.0, 15.0, 6.0, 0.1) / 100
         transaction_cost = st.slider("Transaction Cost (%)", 0.0, 5.0, 0.1, 0.05) / 100
@@ -116,7 +112,7 @@ with col_left:
             start_date_str = start_date.strftime("%Y-%m-%d")
             end_date_str = end_date.strftime("%Y-%m-%d")
 
-            df = get_data(ticker, start_date_str, end_date_str, interval)
+            df = get_data(ticker, start_date_str, end_date_str)
 
             if df.empty:
                 st.error("No data found for this ticker.")
