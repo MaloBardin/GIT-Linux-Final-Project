@@ -1,24 +1,33 @@
-TODO :
+## Installation & Launch
 
-1. Linux deployment 
-2. Adding ticker info page
+### Prerequisites
 
-3. Quant A : 
--Adding prediction (ARIMA and ML)
--Adding other strategies
+- Docker installed (Linux / macOS / Windows)
 
+---
 
-4. QUANT B :
--Update the strategy
--Loading bar
--Display individual ticker's curves (checkbox to choose the tickers)
+### Installation v
 
-5. Bloomberg data retrieval : code to retrieve data on a CSV
+# Clone the repository
 
+```bash
+git clone https://github.com/MaloBardin/GIT-Linux-Final-Project.git
+cd GIT-Linux-Final-Project
+```
 
-Deployment : 
+# Build the Docker image
 
-docker build --no-cache -t my-streamlit-app .
-docker run -p 8501:8501 my-streamlit-app
+```bash
+docker build --no-cache -t streamlit-app .
+```
 
+# Run the container
 
+```bash
+docker run -p 8501:8501 streamlit-app
+
+```
+
+# Once the container is running, you can access the application at:
+
+http://<SERVER_IP>:8501

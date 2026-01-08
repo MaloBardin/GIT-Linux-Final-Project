@@ -3,13 +3,6 @@ __pycache__
 *.pyc
 .env
 .venv
+.idea
 venv
-node_modules
-data
-datasets
 
-
-*.parquet
-*.xlsx
-*.zip
-*.tar
