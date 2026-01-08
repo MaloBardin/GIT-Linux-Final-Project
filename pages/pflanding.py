@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from VVE import getPrintableDf,GetDf
-from VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,animate_dataframe_plotly,plot_max_drawdown
+from VVE import getPrintableDf,GetDf,runEveryDay
+from VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,plot_multirun_static,plot_max_drawdown
 import plotly.express as px
+import warnings
+warnings.filterwarnings("ignore")
+import time
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -31,6 +34,53 @@ barre_menu()
 
 if "backtest_clicked" not in st.session_state:
     st.session_state.backtest_clicked = False
+@st.dialog("📬 Keep track of the market")
+def show_newsletter_popup():
+    st.write(
+        "Join our mailing list to receive daily portfolio reports directly in your inbox.")
+
+    with st.form("newsletter_form"):
+        email = st.text_input("Enter your email address", placeholder="malo@adam.fr")
+        submit_btn = st.form_submit_button("Subscribe Now")
+
+        if submit_btn:
+            if email and "@" in email:
+                file_path = "subscribers.txt"
+
+                email_exists = False
+                if os.path.exists(file_path):
+                    with open(file_path, "r") as f:
+                        if email in f.read():
+                            email_exists = True
+
+                if not email_exists:
+                    with open(file_path, "a") as f:
+                        f.write(f"{email}\n")
+                    st.success("Success! You'll receive our next daily report tomorrow, see you then !")
+
+                else:
+                    st.warning("You are already subscribed!")
+            else:
+                st.error("Please enter a valid email address.")
+
+def barre_menu():
+    col1, col2,col3,col4,col6= st.columns(5)
+    with col1:
+        st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
+    with col2:
+        st.page_link("pages/pflanding.py", label="Portfolio simulation", use_container_width=True)
+    with col3:
+        st.page_link("pages/ticker_page.py", label="Ticker page", use_container_width=True)
+
+    with col6:
+        if st.button("📩 Subscribe to the daily report !", use_container_width=True):
+            show_newsletter_popup()
+
+
+st.set_page_config(page_title="", layout="wide")
+barre_menu()
+
+
 
 @st.dialog("The Black-Litterman Model")
 def show_bl_info():
@@ -77,9 +127,8 @@ with col_info:
 
 col_gauche, col_droite = st.columns([3, 1], gap="medium")
 
-
 df_backtest=pd.read_csv('backtest_bl.csv')
-
+df_3ydata=pd.read_csv('data3y.csv')
 #sliders
 with col_droite:
     with st.container(border=True):
@@ -103,11 +152,12 @@ with col_droite:
                 RunBacktest(hold_param, hist_param, numberviews_param, confidence_param,DynamicLambda)
                 st.success("✅ Backtest finished !")
                 import time
+                st.session_state.mes_actifs_key = []
                 time.sleep(0.5)
                 st.rerun()
 
 
-    with st.container(border=False):
+    with st.container(border=True):
         dfprice=pd.read_csv('data3y.csv')
         df_corr = getCorrelationMatrix(dfprice,dfprice['Date'].iloc[-1],22*hist_param)
         fig_corr = px.imshow(
@@ -124,8 +174,7 @@ with col_droite:
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
-        st.plotly_chart(fig_corr,config={'staticPlot': True}, use_container_width=True)
-
+        st.plotly_chart(fig_corr, width="stretch")
 
         #metrics infos
         st.subheader("📉 Risk Metrics")
@@ -146,36 +195,58 @@ with col_droite:
             st.metric("Sharpe Ratio", f"{sharpe_pf:.2f}")
 
         with col2:
-            st.markdown("#### 📊 \t Cac 40")
+            st.markdown("#### 📊 &nbsp; &nbsp; Cac40")
             st.metric("VaR 99%", f"{var_es_spx['VaR']:.2%}")
             st.metric("ES 99%", f"{var_es_spx['ES']:.2%}")
             st.metric("Sharpe Ratio", f"{sharpe_spx:.2f}")
-
+    with st.container(border=True):
+        import os
+        import datetime
+        st.write("**Refresh the data (auto refresh every day)**")
+        file_time = os.path.getmtime('data3y.csv')
+        last_date = datetime.datetime.fromtimestamp(file_time).strftime('%d/%m/%Y at %H:%M')
+        st.caption(f"📅 Last update : **{last_date}**")
+        if st.button("Get the new data !", use_container_width=True):
+            with st.spinner('⏳ Refreshing data, please wait...'):
+                runEveryDay()
+                st.success("✅ Data refreshed !")
+                import time
+                time.sleep(0.1)
+                st.rerun()
 #graph
 with col_gauche:
+    with st.container(border=True):
+        oAssetColumns = [
+    "AI.PA", "AIR.PA", "ALO.PA", "BN.PA", "BNP.PA", "CA.PA", "CAP.PA",
+    "CS.PA", "DG.PA", "DSY.PA", "EL.PA", "EN.PA", "ENGI.PA", "ERF.PA", "GLE.PA",
+    "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
+    "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
+    "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]
 
-    with st.container(border=False):
-        df_chart = getPrintableDf(df_backtest)
+        selection = st.multiselect(
+            "📈 Display components of the Cac40 (⚠️ this will not have an impact on the composition of the portfolio since everything is automated)",
+            options=oAssetColumns,
+            default=None,
+            key = "mes_actifs_key"
+        )
 
+
+    with st.container(border=True):
+        df_chart = getPrintableDf(df_backtest,df_3ydata,selection)
         fix = px.line(
             df_chart,
             x="Date",
             y="Évolution en %",
             color="Série",
             color_discrete_map={"Cac40": "red", "Portfolio": "green"},
-            title="Comparaison of the Black-Litterman Portfolio vs Cac40 in %"
-        )
+            title="Comparaison of the Black-Litterman Portfolio")
 
         fix.update_layout(hovermode="x unified")
 
-        st.plotly_chart(
-            fix,
-            use_container_width=True,
-            config={'staticPlot': True}
-        )
+        st.plotly_chart(fix, width="stretch")
 
 
-    with st.container(border=False):
+    with st.container(border=True):
         data_tuples = GetInfoOnBacktest(df_backtest)
         df_histo = pd.DataFrame(data_tuples, columns=["Actif", "Fréquence"])
         df_histo = df_histo.sort_values(by="Fréquence", ascending=False)
@@ -196,42 +267,42 @@ with col_gauche:
             paper_bgcolor="rgba(0,0,0,0)"
         )
 
+        st.plotly_chart(fig, width="stretch")
+    with st.container(border=True):
+        data_toplot=dailyvol(df_backtest)
+        fig = px.line(data_toplot,
+                      x=data_toplot.index,
+                      y=["annualizedvolCac40", "annualizedVolPf"],
+                      labels={"value": "annualized vol", "variable": "Actif", "Date": "Date"},
+                      title="Annualized volatility")
 
-        st.plotly_chart(fig,config={'staticPlot': True}, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
+    with st.container(border=True):
+        fig, mdd, start, end = plot_max_drawdown(df_backtest)
+        st.plotly_chart(fig, width="stretch")
 
-    data_toplot=dailyvol(df_backtest)
-    fig = px.line(data_toplot,
-                  x=data_toplot.index,
-                  y=["annualizedvolCac40", "annualizedVolPf"],
-                  labels={"value": "annualized vol", "variable": "Actif", "Date": "Date"},
-                  title="annualized vol : Cac40 vs Portfolio")
-
-    st.plotly_chart(fig, config={'staticPlot': True}, use_container_width=True)
-
-    fig, mdd, start, end = plot_max_drawdown(df_backtest)
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.error(f"📉 **Maximum Drawdown :** {mdd:.2%}")
-    st.info(f"⏱️ **Drop and recovery duration :** {(end - start).days} days")
+        st.error(f"📉 **Maximum Drawdown :** {mdd:.2%}")
+        st.info(f"⏱️ **Drop and recovery duration :** {(end - start).days} days")
 
 st.divider()
 st.subheader("🔃 Multi-Run Simulation")
+with st.container(border=True):
+    st.info("This section is used to run multiple backtest with mooving starting date to verify that the Black and Litterman model is not path dependant. It take the same parameters as the backtest above, please be patient.")
+    col_input, col_btn = st.columns([1, 2])
 
-st.info("This section is used to run multiple backtest with mooving starting date to verify that the Black and Litterman model is not path dependant. It take the same parameters as the backtest above, please be patient.")
-col_input, col_btn = st.columns([1, 2])
+    with col_input:
+        nb_runs = st.number_input("Simulations number",min_value=1,max_value=50,value=5,step=1,help="The larger the number is, the longer the code will take to compute")
 
-with col_input:
-    nb_runs = st.number_input("Simulations number",min_value=1,max_value=50,value=5,step=1,help="The larger the number is, the longer the code will take to compute")
+    with col_btn:
+        st.write("")
+        st.write("")
+        start_multirun = st.button("🚀 Launch Multi-Run", type="primary")
 
-with col_btn:
-    st.write("")
-    st.write("")
-    start_multirun = st.button("🚀 Launch Multi-Run", type="primary")
+    if start_multirun:
+        my_bar = st.progress(0, text="Preparing simulations...")
 
-if start_multirun:
-    with st.spinner(f"⏳Running {nb_runs} simulations. Please wait..."):
-        multirundf = multirun(df_backtest, n_simulations=nb_runs)
-        st.toast("Simulation is finished!", icon="🏁")
-
-if "multirun_data" in st.session_state:
-    animate_dataframe_plotly(multirundf)
+        with st.spinner("Work in progress, the best simulation will be displayed in green, please wait..."):
+            multirundf = multirun(dfprice, n_simulations=nb_runs, progress_bar=my_bar)
+        st.toast("Simulations are finished !", icon="🏁")
+        my_bar.empty()
+        plot_multirun_static(multirundf)

@@ -6,11 +6,28 @@ import plotly.express as px
 from fredapi import Fred
 import warnings
 import yfinance as yf
+from streamlit import columns
+
 warnings.filterwarnings("ignore")
 import streamlit as st
 
 from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
 #%%
+
+
+df=pd.read_csv("data3y.csv")
+df.columns = df.columns.str.replace('^FCHI', 'Cac40')
+autres_colonnes = [col for col in df.columns if col not in ['Date', 'Cac40']]
+df = df[['Date', 'Cac40'] + autres_colonnes]
+df["Date"] = pd.to_datetime(df["Date"])
+def runEveryDay():
+    df_new = GetDf()
+    df_new.to_csv("data3y.csv", index=False)
+    riskfree_df=GetRfDataframe(df_new)
+    riskfree_df.to_csv("riskfree_data.csv")
+
+
+
 def GetDf():
     # tickers cac40
     cac40 = [
@@ -23,21 +40,15 @@ def GetDf():
     ]
 
     df = yf.download(cac40, period='3y', interval='1d')['Close']
+    df = df.reset_index()
+    df.columns = df.columns.str.replace('^FCHI', 'Cac40')
+
+    autres_colonnes = [col for col in df.columns if col not in ['Date', 'Cac40']]
+    df = df[['Date', 'Cac40'] + autres_colonnes]
+
+    df["Date"] = pd.to_datetime(df["Date"])
     return df
 
-df = GetDf()
-df = df.reset_index()
-df.columns = df.columns.str.replace('^FCHI', 'Cac40')
-
-autres_colonnes = [col for col in df.columns if col not in ['Date', 'Cac40']]
-df = df[['Date', 'Cac40'] + autres_colonnes]
-
-
-df["Date"] = pd.to_datetime(df["Date"])
-print(df.columns)
-
-#%%
-df
 
 #%%
 def GetReturn(df, date, lookback):
@@ -228,7 +239,7 @@ def GetRiskFree(df,date,lookback,RfDf):
 
     return RfDf["CumulativeRf"].iloc[-1]
 
-RfDf=GetRfDataframe(df)
+#RfDf=GetRfDataframe(df)
 
 #compute risk free dataframe using API from FRED and get the cumulative risk free rate between two dates in a df
 #%%
@@ -239,7 +250,7 @@ def GetWeight(df,date):
         weight_vector[i]=1/36
 
     return weight_vector
-Weight=GetWeight(df,"2020-05-11")
+#Weight=GetWeight(df,"2020-05-11")
 
 #%%
 def GetLambda(df,date,timeofcalculation,RfDf):
@@ -271,7 +282,7 @@ def GetLambda(df,date,timeofcalculation,RfDf):
 
 #compute the lambda value using the mean return, risk free rate and variance of the portfolio
 
-Lambda=GetLambda(df,"2024-01-11",timeofcalculation=150,RfDf=RfDf)
+#Lambda=GetLambda(df,"2024-01-11",timeofcalculation=150,RfDf=RfDf)
 
 
 #%%
@@ -296,6 +307,7 @@ def GetPMatrix(df,date, lookback,proportion=3,historical_returns=0):
     "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
     "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
     "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]
+
     bestperformer = []
     performerc = []
     performerc_daily=[]
@@ -411,14 +423,12 @@ def BlackAndLittermanModel(backtestStartDate, rebalancingFrequency, lookbackPeri
     return WeightBL,WeightRF,historical_returns
 
 
-BlackAndLittermanModel("2024-06-11", rebalancingFrequency=3, lookbackPeriod=180, df=df,RfDf=RfDf)
+#BlackAndLittermanModel("2024-06-11", rebalancingFrequency=3, lookbackPeriod=180, df=df,RfDf=RfDf)
 
 #%%
 from rich.console import Console
 from rich.panel import Panel
 from tqdm import tqdm
-
-console = Console()
 
 #BACK TESTER
 dfbacktest=df.copy()
@@ -428,8 +438,6 @@ dfbacktest["MonthIndex"] = dfbacktest["Date"].dt.to_period("M")
 df_length = dfbacktest.shape[1] - 2  # bcs of date and spx
 last_rebalance = dfbacktest.loc[0, "Date"]  # première date
 month_count = 0
-
-# 🎨 AFFICHAGE STYLÉ (sans prompts)
 hold = 1
 hist = 0
 proportion = 4
@@ -437,21 +445,7 @@ Lambda=3
 tau=0.025
 confidence=0.75
 
-console.print(Panel.fit(
-    "[bold cyan]📊 PORTFOLIO BACKTESTER[/bold cyan]\n"
-    "[dim]Black-Litterman Model[/dim]",
-    border_style="cyan"
-))
 
-console.print(f"\n[yellow]⚙️  Configuration :[/yellow]")
-console.print(f"   • Hold period: [cyan]{hold}[/cyan] mois")
-console.print(f"   • Historique: [cyan]{hist}[/cyan] mois")
-console.print(f"   • Proportion: [cyan]{proportion}[/cyan]")
-console.print(f"   • Lambda: [cyan]{Lambda:.4f}[/cyan]")
-console.print(f"   • Confiance: [cyan]{confidence}[/cyan]")
-console.print(f"   • Taux: [cyan]{tau}[/cyan]\n")
-
-console.print("\n[yellow]⏳ Lancement du backtest...[/yellow]\n")
 def Backtester(df,hold, hist, proportion,df_toBL, RfDf,confidence2,proportion2,tau2,Lambda2,start,modifiedlambda):
     #new dataframe for stock quantity
 
@@ -521,25 +515,25 @@ def Backtester(df,hold, hist, proportion,df_toBL, RfDf,confidence2,proportion2,t
 
 
 def RunBacktest(hold=1, hist=3, proportion=3, confidence=0.2,ModifiedLambda=False):
-    print(hold, hist, proportion, confidence)
     RfDf = GetRfDataframe(df)
     final=Backtester(dfbacktest, hold=hold, hist=hist, proportion=proportion, df_toBL=df,RfDf=RfDf,confidence2=confidence,proportion2=proportion,tau2=tau,Lambda2=Lambda,start=181,modifiedlambda=ModifiedLambda)
 
     final.to_csv("backtest_bl.csv")
 
-    console.print("\n[green]✅ Backtest terminé avec succès ![/green]\n")
+def getPrintableDf(final,data,selection):
+    df_combined = pd.DataFrame()
+    df_combined["Date"] = final["Date"]
+    df_combined["Portfolio"] = (final["Money"] / final["Money"].iloc[0] * 100) - 100
+    df_combined["Cac40"] = (final["Cac40"] / final["Cac40"].iloc[0] * 100) - 100
+    final["Date"] = pd.to_datetime(final["Date"])
+    data["Date"] = pd.to_datetime(data["Date"])
+    prices_subset = pd.merge(final[["Date"]], data, on="Date", how="left")
+    prices_subset.drop(columns=["Date","Cac40"], inplace=True)
 
-def getPrintableDf(final):
+    for assets in selection:
+        df_combined[assets] = (prices_subset[assets]/prices_subset[assets].iloc[0]*100) - 100
 
-    money_norm = (final["Money"]/10000000*100) - 100
-    spx_norm = (final["Cac40"]/final["Cac40"].iloc[0]*100) - 100
-
-    df_plot = pd.DataFrame({
-        "Date": final["Date"],
-        "Portfolio": money_norm,
-        "Cac40": spx_norm
-    }).melt(id_vars="Date", var_name="Série", value_name="Évolution en %")
-
+    df_plot = df_combined.melt(id_vars="Date", var_name="Série", value_name="Évolution en %")
     return df_plot
 
 #%%
@@ -580,14 +574,7 @@ def calculate_sharpe_ratio(df, col_name='close', risk_free_rate_annual=0.04):
     return sharpe_annualized
 
 #%%
-'''
-print("Portfolio Risk Measures:")
-print(calculate_historical_var_es(final, 'Money', 0.99))
-print(f"Sharpe Ratio: {calculate_sharpe_ratio(final, 'Money', 0.03):.2f}")
 
-print("\nSPX Risk Measures:")
-print(calculate_historical_var_es(final, 'SPX', 0.99))
-print(f"Sharpe Ratio: {calculate_sharpe_ratio(final, 'SPX', 0.03):.2f}")'''
 #%%
 #%%
 def dailyvol(final):
@@ -610,10 +597,16 @@ def dailyvol(final):
     return data_to_plot
 #%%
 #multiple runs on variable start date :
-def multirun(final,n_simulations=5):
+def multirun(final,n_simulations=5,progress_bar=None):
     all_results = []
-
+    RfDf = pd.read_csv("riskfree_data.csv")
+    RfDf["Date"] = pd.to_datetime(RfDf["Date"])
+    RfDf = RfDf.set_index("Date")
     for i in range(n_simulations):
+        if progress_bar is not None:
+            percent_complete = i/ n_simulations
+            progress_bar.progress(percent_complete, text=f"🚀 Simulation {i + 1}/{n_simulations} in the oven")
+
         current_start = 181 + i
         results_df = Backtester(dfbacktest, hold=hold, hist=hist, proportion=proportion,
                                 df_toBL=df, RfDf=RfDf, confidence2=confidence,
@@ -627,71 +620,81 @@ def multirun(final,n_simulations=5):
         temp_df.index = dateresults
 
         all_results.append(temp_df)
-
+    if progress_bar is not None:
+        progress_bar.progress(1.0, text="✅ Finished")
     global_df = pd.concat(all_results, axis=1)
 
     global_df_clean = global_df.dropna()
 
     dfcopyfinal = final[["Date", "Cac40"]].copy()
+    dfcopyfinal["Date"] = pd.to_datetime(dfcopyfinal["Date"])
     dfcopyfinal.index = dfcopyfinal["Date"]
     dfcopyfinal.drop(columns="Date", inplace=True)
 
     global_df_clean = global_df_clean.merge(dfcopyfinal, left_index=True, right_index=True, how="left")
     spx_norm = (global_df_clean["Cac40"] / global_df_clean["Cac40"].iloc[0] * 100) - 100
     global_df_clean["Cac40"] = spx_norm
-    print(global_df_clean.tail(5))
     return global_df_clean
 
 #%%
 import numpy as np
 import plotly.graph_objects as go
-
-
-def animate_dataframe_plotly(df,step=5,speed=20,spx_col="Cac40"):
-
-    df_anim = df.iloc[::step]
-    x = df_anim.index
-
-    final_values = df_anim.iloc[-1]
+def plot_multirun_static(df, spx_col="Cac40"):
+    final_values = df.iloc[-1]
     best_col = final_values.drop(spx_col, errors="ignore").idxmax()
 
-    traces = []
-    for col in df_anim.columns:
+    fig = go.Figure()
+    all_cols = list(df.columns)
+
+    if best_col in all_cols: all_cols.remove(best_col); all_cols.append(best_col)
+    if spx_col in all_cols: all_cols.remove(spx_col); all_cols.append(spx_col)
+
+    for col in all_cols:
         if col == spx_col:
             color = "red"
-            width = 2
-            alpha = 1
+            width = 3
+            opacity = 1
+            show_legend = True
         elif col == best_col:
             color = "green"
-            width = 2
-            alpha = 1
+            width = 3
+            opacity = 1
+            show_legend = False
         else:
-            color = "rgba(250, 250, 250,1)"
-            width = 1
-            alpha = 0.4
-        traces.append(go.Scatter(x=[],y=[],mode="lines",line=dict(color=color, width=width),opacity=alpha,name=col,showlegend=False))
+            color = "rgba(150, 150, 150, 0.8)"
+            width = 2
+            opacity = 0.8
+            show_legend = False
 
-    frames = []
-    for t in range(1, len(df_anim)):
-        frame_data = []
-        for col in df_anim.columns:
-            frame_data.append(go.Scatter(x=x[:t],y=df_anim[col].values[:t]))
-        frames.append(go.Frame(data=frame_data, name=str(t)))
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[col],
+            mode='lines',
+            name=col,
+            line=dict(color=color, width=width),
+            opacity=opacity,
+            showlegend=show_legend
+        ))
 
-    layout = go.Layout(title="Multiple Backtest Runs",xaxis=dict(title="Date"),yaxis=dict(title="Perf (%)"),plot_bgcolor="black",paper_bgcolor="black",font=dict(color="white"),updatemenus=[dict(type="buttons",showactive=False,buttons=[dict(label="▶ Play",method="animate",args=[None,dict( frame=dict(duration=speed, redraw=True),fromcurrent=True)]),dict(label="⏸ Pause",method="animate",args=[[None],dict(frame=dict(duration=0), mode="immediate")])])])
+    fig.update_layout(
+        title="Multi-run simulation",
+        xaxis_title="Date",
+        yaxis_title="Perf %",
+        template="plotly_dark",
+        hovermode="x unified",
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        )
+    )
 
-    fig = go.Figure(data=traces,layout=layout,frames=frames)
-
-    st.plotly_chart(fig, config={'staticPlot': True}, use_container_width=True)
-
+    st.plotly_chart(fig, width="stretch", config={"staticPlot": True})
 
 def GetInfoOnBacktest(df_final):
-    col_name = "Unnamed: 0"
-
-    if col_name in df_final.columns:
-        df_final = df_final.drop(columns=[col_name])
-
     listofmostpickedassets=[]
+    df_final.drop(columns="Unnamed: 0",inplace=True)
     for i in range(2,df_final.shape[1]-1):
         listofmostpickedassets.append((df_final.columns[i],0))
 
@@ -699,10 +702,10 @@ def GetInfoOnBacktest(df_final):
     for lines in range(df_final.shape[0]):
         if df_final.iloc[lines,3] != 0:
             for assets in range(2,df_final.shape[1]-1):
-                if df_final.iloc[lines,assets] > 0 and df_final.iloc[lines,assets] != df_final.iloc[lines-1,assets]:
+                if df_final.iloc[lines,assets] != df_final.iloc[lines-1,assets] and df_final.iloc[lines,assets]>0 :
                     listofmostpickedassets[assets-2]=(listofmostpickedassets[assets-2][0],listofmostpickedassets[assets-2][1]+1)
 
-    print(listofmostpickedassets)
+
     return listofmostpickedassets
 
 
@@ -731,7 +734,6 @@ def GetReturnwihtoutcv(df, date, lookback):
 
 #animate_dataframe_plotly(global_df_clean,step=5,speed=20)
 def getCorrelationMatrix(df, date, lookback):
-    print(date)
     returns_df = GetReturnwihtoutcv(df, date, lookback=lookback)
     correlation_matrix = returns_df.corr()
 
