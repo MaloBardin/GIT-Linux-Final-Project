@@ -22,7 +22,7 @@ st.set_page_config(page_title="", layout="wide")
 
 
 
-@st.dialog("The Black-Litterman Model")
+@st.dialog("The Black-Litterman Model") #information button
 def show_bl_info():
     st.write("### 🧠 Understanding the Model")
 

@@ -4,13 +4,14 @@ import math
 from grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph, GetDf
 from mailsending import show_newsletter_popup,callforlinux
 from utils import local_css, barre_menu
+from ForLinux import LinuxRunEveryFiveMin
 #callforlinux()
 #setup
 query_params = st.query_params
 
 local_css("style.css")
 barre_menu()
-
+LinuxRunEveryFiveMin()
 #newsltter popup
 
 
