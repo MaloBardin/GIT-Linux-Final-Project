@@ -5,7 +5,29 @@ from VVE import getPrintableDf,GetDf
 from VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,animate_dataframe_plotly,plot_max_drawdown
 import plotly.express as px
 
-st.set_page_config(layout="wide")
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+local_css("style.css")
+
+def barre_menu():
+    col1, col2,col3,col4,col6= st.columns(5)
+    with col1:
+        st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
+    with col2:
+        st.page_link("pages/quant_A_page.py", label="Single Asset", use_container_width=True)
+        
+    with col3:
+        st.page_link("pages/pflanding.py", label="Portfolio simulation", use_container_width=True)
+
+    with col6:
+        if st.button("📩 Subscribe to the daily report !", use_container_width=True):
+            show_newsletter_popup()
+
+
+barre_menu()
 
 if "backtest_clicked" not in st.session_state:
     st.session_state.backtest_clicked = False

@@ -5,7 +5,7 @@
 }
 
 header[data-testid="stHeader"] {
-  display: auto;
+  display: none;
 }
 
 .ticker-wrap {
