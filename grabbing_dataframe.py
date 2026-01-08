@@ -24,7 +24,7 @@ def GetDf():
 
 @st.cache_data
 def ReadDf():
-    df = pd.read_csv('cac40_data.csv')
+    df = pd.read_csv("data3y.csv")
     return df
 
 
@@ -74,7 +74,7 @@ name_map = {
 @st.cache_data
 def Dfcleaning(df):
     df=df.ffill()
-    df["Datetime"]=pd.to_datetime(df['Datetime'])
+    df["Date"]=pd.to_datetime(df['Date'])
     df = df.rename(columns=name_map)
 
     return df
@@ -84,13 +84,15 @@ def Dfcleaning(df):
 
 
 def GetReturnSinceLookBack(df,lookback_days):
-    latest_index=df.index[-1]
-    todaysdate=df['Datetime'].dt.date.iloc[latest_index]
-    lookback_date=todaysdate-pd.Timedelta(days=lookback_days)
-    morningtime=pd.Timestamp(f"{lookback_date} 08:00:00+00:00")
-    morning_index=df.index[df['Datetime']==morningtime][0]
-
-    return (df.iloc[latest_index,1:]-df.iloc[morning_index,1:])/df.iloc[morning_index,1:]*100
+    latest_index =df.index[-1]
+    todaysdate=df["Date"].iloc[latest_index]
+    lookback_date= todaysdate-pd.Timedelta(days=lookback_days)
+    mask = df["Date"]>= lookback_date
+    if mask.any():
+        morning_index= df.index[mask][0]
+    else:
+        morning_index =df.index[0]
+    return (df.iloc[latest_index, 1:]-df.iloc[morning_index, 1:])/df.iloc[morning_index, 1:]*100
 
 
 
@@ -110,8 +112,8 @@ df_dash=GetDfForDashboard(Dfcleaning(ReadDf()))
 
 
 def getInfoperTicker(df,ticker):
-    longtimedata=df[["Datetime",ticker]]
-    latestdate=df['Datetime'].dt.date.iloc[df.index[-1]]
+    longtimedata=df[["Date",ticker]]
+    latestdate=df['Date'].dt.date.iloc[df.index[-1]]
 
     #request on yfinance to get the 5min data for today
     key_ticker=[ a for a, b in name_map.items() if b == ticker]
@@ -173,21 +175,20 @@ def getInfoperTicker2(ticker):
 
     return flatten_columns(intraday_data), flatten_columns(onemonth_data), flatten_columns(fiveyear_data)
 
-def getDfForGraph(df,dayforgraphlookback=30):
 
-    graph_df=pd.DataFrame()
-
+def getDfForGraph(df, dayforgraphlookback=30):
+    graph_df = pd.DataFrame()
     latest_index = df.index[-1]
-    todaysdate = df['Datetime'].dt.date.iloc[latest_index]
+    todaysdate = df['Date'].iloc[latest_index]
     lookback_date = todaysdate - pd.Timedelta(days=dayforgraphlookback)
-    morningtime = pd.Timestamp(f"{lookback_date} 08:00:00+00:00")
-    morning_index = df.index[df['Datetime'] == morningtime][0]
-
-
+    mask = df['Date'] >= lookback_date
+    if mask.any():
+        morning_index = df.index[mask][0]
+    else:
+        morning_index = df.index[0]
     for ticker in df.columns[1:]:
-        graph_df[ticker]=df[ticker]
-    graph_df=graph_df[morning_index:-1:1]  
+        graph_df[ticker] = df[ticker]
+    graph_df = graph_df[morning_index:-1:1]
     return graph_df
-
 
 

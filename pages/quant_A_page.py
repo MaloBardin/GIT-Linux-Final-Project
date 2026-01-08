@@ -17,6 +17,8 @@ from quant_A_utils import (
     performance_metrics,
     predict_arima
 )
+from mailsending import show_newsletter_popup
+
 
 def local_css(file_name):
     try:
