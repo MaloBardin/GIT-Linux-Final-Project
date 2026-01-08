@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import math
-from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf, getDfForGraph
+from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf, getDfForGraph, GetDf
 
 #setup
 query_params = st.query_params
@@ -14,6 +14,8 @@ def local_css(file_name):
 
 
 local_css("style.css")
+
+
 
 
 # graph generation
@@ -48,22 +50,28 @@ def generate_sparkline(data):
 df_total = GetDfForDashboard(Dfcleaning(ReadDf()))
 
 df2 = df_total.copy()
-
-df2['Var_Str'] = df2['Return_1d'].apply(lambda x: f"{x:+.2f}%")
-df2['Formatted_Ticker'] = df2['Ticker'] + ' : ' + df2['Var_Str']
-
 formatted_list = []
+
 for index, row in df2.iterrows():
-    if row['Return_1d'] >= 0:
-        color = '#29f075'  
+    ticker = row['Ticker']
+    price = row['Price'] 
+    change = row['Return_1d']
+
+    if change >= 0:
+        color = '#4caf50' 
+        arrow = '▲'
     else:
-        color = '#CC4974'  
-        
-    formatted_list.append(f'<span style="color:{color};">{row["Formatted_Ticker"]}</span>')
+        color = '#f44336'
+        arrow = '▼'
 
-separator = ' <span style="color: #FFFFFF;"> | </span> ' 
+    html_str = f"""
+    <span style='font-weight:bold; color:#ffffff;'>{ticker}</span> 
+    <span style='color:#e0e0e0;'>${price:.2f}</span> 
+    <span style='color:{color};'>{arrow} {abs(change):.2f}%</span>
+    """
+    formatted_list.append(html_str)
 
-message_ban_tickers = separator.join(formatted_list)
+message_ban_tickers = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".join(formatted_list)
 
 st.markdown(f"""
     <div class="ticker-wrap">
@@ -72,7 +80,58 @@ st.markdown(f"""
         </div>
     </div>
 """, unsafe_allow_html=True)
+
 #table setup
+best_performer = df_total.loc[df_total['Return_1d'].idxmax()]
+worst_performer = df_total.loc[df_total['Return_1d'].idxmin()]
+
+avg_return = df_total['Return_1d'].mean()
+avg_color = "metric-delta-pos" if avg_return >= 0 else "metric-delta-neg"
+
+st.markdown(f"""
+<div class="metric-container">
+    <div class="metric-card">
+        <div class="metric-title"> Top Performer</div>
+        <div class="metric-value">{best_performer['Ticker']}</div>
+        <div class="metric-delta-pos">+{best_performer['Return_1d']:.2f}%</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-title">Worst Performer</div>
+        <div class="metric-value">{worst_performer['Ticker']}</div>
+        <div class="metric-delta-neg">{worst_performer['Return_1d']:.2f}%</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-title">Average Market 1D</div>
+        <div class="metric-value">{avg_return:.2f}%</div>
+        <div class="{avg_color}">Global Trend</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+
+col_search, col_sort = st.columns([3, 1])
+
+with col_search:
+    search_query = st.text_input("🔍 Search Ticker", placeholder="...", label_visibility="collapsed")
+
+with col_sort:
+    sort_option = st.selectbox("Sort by", ["Price Desc", "Price Asc", "Return 1D Desc", "Return 1D Asc" ], label_visibility="collapsed")
+
+if search_query:
+    df_total = df_total[df_total['Ticker'].str.contains(search_query.upper(), na=False)]
+if sort_option == "Return 1D Desc":
+    df_total = df_total.sort_values(by="Return_1d", ascending=False)
+elif sort_option == "Return 1D Asc":
+    df_total = df_total.sort_values(by="Return_1d", ascending=True)
+elif sort_option == "Price Desc":
+    df_total = df_total.sort_values(by="Price", ascending=False)
+else:
+    df_total = df_total.sort_values(by="Price", ascending=True)
+
+if search_query or sort_option:
+    if 'last_search' not in st.session_state or st.session_state.last_search != search_query:
+        st.session_state.page_number = 0
+        st.session_state.last_search = search_query
 
 ROWS_PER_PAGE = 10
 
@@ -149,7 +208,6 @@ def make_clickable(row):
 
 #table display
 cols_order = ['Ticker', 'Price', 'Return_1d', 'Return_7d', 'Return_30d', 'Graph', 'Button']
-# On filtre pour ne garder que les colonnes qui existent (sécurité si Return_30d manque)
 cols_present = [c for c in cols_order if c in df_page.columns]
 df_display = df_page[cols_present].copy()
 
@@ -174,8 +232,9 @@ styled_df = styled_df.hide()
 
 html_table = styled_df.to_html(index=False, border=0, escape=False)
 
-st.markdown(html_table, unsafe_allow_html=True)
-st.write("")
+with st.container(border=True):
+    st.markdown(html_table, unsafe_allow_html=True)
+    st.write("")
 
 #nav
 
@@ -192,7 +251,7 @@ with col1:
 with col2:
     st.markdown(
         f"<div style='text-align: center; margin-top: 10px;'>"
-        f"Page <b>{current_page}</b> sur <b>{total_pages}</b>"
+        f"Page <b>{current_page}</b> of <b>{total_pages}</b>"
         f"</div>",
         unsafe_allow_html=True
     )

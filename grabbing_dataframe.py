@@ -3,8 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
+import streamlit as st
 
 
+@st.cache_data
 def GetDf():
     # tickers cac40
     cac40 = [
@@ -20,7 +22,7 @@ def GetDf():
 
 
 
-
+@st.cache_data
 def ReadDf():
     df = pd.read_csv('cac40_data.csv')
     return df
@@ -69,17 +71,16 @@ name_map = {
     'WLN.PA': 'Worldline'
 }
 
-
+@st.cache_data
 def Dfcleaning(df):
-    df=df.fillna(method='ffill')
+    df=df.ffill()
     df["Datetime"]=pd.to_datetime(df['Datetime'])
-
     df = df.rename(columns=name_map)
 
     return df
 
 
-df=Dfcleaning(df)
+
 
 
 def GetReturnSinceLookBack(df,lookback_days):
@@ -93,7 +94,7 @@ def GetReturnSinceLookBack(df,lookback_days):
 
 
 
-
+@st.cache_data
 def GetDfForDashboard(df):
     df_dashboard=pd.DataFrame()
     df_dashboard["Ticker"]=df.columns[1:]
@@ -161,22 +162,16 @@ def flatten_columns(df):
         df.columns = df.columns.get_level_values(0)
     return df
 
+def getInfoperTicker2(ticker):
 
-def getInfoperTicker2(df,ticker):
-    longtimedata=df[["Datetime",ticker]]
-    latestdate=df['Datetime'].dt.date.iloc[df.index[-1]]
-
-    #request on yfinance to get the 5min data for today
     key_ticker=[ a for a, b in name_map.items() if b == ticker]
     symbol = key_ticker[0]
 
     intraday_data=yf.download(symbol, period='1d', interval="1m")[['Close', 'Volume']]
-    sevendays_data=yf.download(symbol, period='7d', interval="1h")[['Close', 'Volume']]
     onemonth_data=yf.download(symbol, period='30d', interval="1h")[['Close', 'Volume']]
-    oneyear_data=yf.download(symbol, period='1y', interval="1d")[['Close', 'Volume']]
     fiveyear_data = yf.download(symbol, period='5y', interval="1wk")[['Close', 'Volume']]
 
-    return flatten_columns(intraday_data), flatten_columns(sevendays_data), flatten_columns(onemonth_data), flatten_columns(oneyear_data), flatten_columns(fiveyear_data)
+    return flatten_columns(intraday_data), flatten_columns(onemonth_data), flatten_columns(fiveyear_data)
 
 def getDfForGraph(df,dayforgraphlookback=30):
 
@@ -195,9 +190,4 @@ def getDfForGraph(df,dayforgraphlookback=30):
     return graph_df
 
 
-short_df,sevendays_data,onemonth_data,isoverbuying=getInfoperTicker(df,'AXA')
 
-print(short_df)
-print(sevendays_data)
-print(onemonth_data)
-print(isoverbuying)

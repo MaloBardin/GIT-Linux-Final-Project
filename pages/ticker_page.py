@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from grabbing_dataframe import Dfcleaning, ReadDf, getInfoperTicker2
+from grabbing_dataframe import  getInfoperTicker2
 
 st.set_page_config(layout="wide", page_title="Ticker Analysis")
 
@@ -29,18 +29,15 @@ with col_btn:
     if st.button("⬅️ Back", use_container_width=True):
         st.markdown('<meta http-equiv="refresh" content="0; url=/home_page" target="_self">', unsafe_allow_html=True)
 
-df_global = Dfcleaning(ReadDf())
 
 try:
     # Data retrieval from yfinance
-    intraday_data, seven_days, one_month, one_year, five_year = getInfoperTicker2(df_global, selected_ticker)
+    intraday_data, one_month, five_year = getInfoperTicker2(selected_ticker)
 
-    current_price = float(one_month['Close'].iloc[-1])
+    current_price = float(intraday_data['Close'].iloc[-1])
     
     variation_1d = ((current_price - intraday_data['Close'].iloc[0]) / intraday_data['Close'].iloc[0]) * 100
-    variation_7d = ((current_price - seven_days['Close'].iloc[0]) / seven_days['Close'].iloc[0]) * 100
     variation_1m = ((current_price - one_month['Close'].iloc[0]) / one_month['Close'].iloc[0]) * 100
-    variation_1y = ((current_price - one_year['Close'].iloc[0]) / one_year['Close'].iloc[0]) * 100
     variation_5y = ((current_price - five_year['Close'].iloc[0]) / five_year['Close'].iloc[0]) * 100
 
     
@@ -69,7 +66,7 @@ try:
     with col_left:
         st.subheader("Price Evolution")
         
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["1 Day", "7 Days", "30 Days", "1 Year", "5 Years"])
+        tab1, tab2, tab3 = st.tabs(["1 Day",  "30 Days", "5 Years"])
 
         with tab1:
             x_col = intraday_data.index
@@ -85,15 +82,6 @@ try:
                 st.info("No data available for 1 Day.")
 
         with tab2:
-            if not seven_days.empty:
-                fig_7d = px.line(seven_days, x=seven_days.index, y="Close", title="7-Day Trend", markers=True)
-                fig_7d.update_layout(xaxis_title=None, yaxis_title="Price (€)", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified")
-                fig_7d.update_traces(line_color='#29f075' if variation_7d >= 0 else '#CC4974')
-                st.plotly_chart(fig_7d, use_container_width=True)
-            else:
-                st.info("No data available for 7 Days.")
-
-        with tab3:
             if not one_month.empty:
                 fig_30d = px.line(one_month, x=one_month.index, y="Close", title="30-Day Trend (Hourly)")
                 fig_30d.update_layout(xaxis_title=None, yaxis_title="Price (€)", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified")
@@ -102,20 +90,12 @@ try:
             else:
                 st.info("No data available for 30 Days.")
 
-        with tab4:
-            if not one_year.empty:
-                fig_1y = px.line(one_year, x=one_year.index, y="Close", title="1-Year Trend (Daily)")
-                fig_1y.update_layout(xaxis_title=None, yaxis_title="Price (€)", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified")
-                fig_1y.update_traces(line_color='#29f075' if variation_1y >= 0 else '#CC4974')
-                st.plotly_chart(fig_1y, use_container_width=True)
-            else:
-                st.info("No data available for 1 Year.")
 
-        with tab5:
+        with tab3:
             if not five_year.empty:
                 fig_5y = px.line(five_year, x=five_year.index, y="Close", title="5-Year Trend (Weekly)")
                 fig_5y.update_layout(xaxis_title=None, yaxis_title="Price (€)", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", hovermode="x unified")
-                fig_5y.update_traces(line_color='#29f075' if variation_1y >= 0 else '#CC4974')
+                fig_5y.update_traces(line_color='#29f075' if variation_5y >= 0 else '#CC4974')
                 st.plotly_chart(fig_5y, use_container_width=True)
             else:
                 st.info("No data available for 5 Years.")
@@ -170,11 +150,11 @@ try:
         with st.container(border=True):
             stat_col1, stat_col2 = st.columns(2)
             
-            vol_mean = seven_days['Volume'].mean() if 'Volume' in seven_days.columns else 0
+            vol_mean = one_month['Volume'].mean() if 'Volume' in one_month.columns else 0
             vol_display = f"{int(vol_mean):,}" if pd.notnull(vol_mean) else "N/A"
 
             with stat_col1:
-                st.metric("Avg Volume (7d)", vol_display)
+                st.metric("Avg Volume (30)", vol_display)
             with stat_col2:
                 st.metric("Highest (30d)", f"{one_month['Close'].max():.2f} €")
                 
