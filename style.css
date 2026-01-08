@@ -1,37 +1,43 @@
+.block-container {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+  margin-top: 0 !important;
+}
+
+header[data-testid="stHeader"] {
+  display: none;
+}
+
 .ticker-wrap {
   width: 100%;
-  background-color: #262730;
+  background-color: #0e1117;
   overflow: hidden;
-  white-space: nowrap;
-  box-sizing: border-box;
   padding: 10px 0;
-  margin-bottom: 20px;
-  border-top: 1px solid #444;
-  border-bottom: 1px solid #444;
+  display: flex;
 }
 
 .ticker-move {
-  display: inline-block;
-  white-space: nowrap;
-  padding-left: 100%;
-  animation: ticker-animation 100s linear infinite;
+  display: flex;
+  min-width: 100%;
+  animation: ticker-animation 15s linear infinite;
 }
 
 .ticker-item {
-  display: inline-block;
-  padding: 0 2rem;
-  font-size: 18px;
-  color: #23830f;
-  font-weight: bold;
-  font-family: "Courier New", Courier, monospace;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+  padding-right: 20px;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
 }
 
 @keyframes ticker-animation {
   0% {
-    transform: translate3d(0, 0, 0);
+    transform: translateX(0);
   }
   100% {
-    transform: translate3d(-100%, 0, 0);
+    transform: translateX(-50%);
   }
 }
 
@@ -53,8 +59,8 @@
 .big-font-table td {
   position: relative;
   font-size: 15px;
-  padding: 10px;
-  height: 50px;
+  padding: 5px;
+  height: 65px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   text-align: center;
@@ -70,4 +76,45 @@
   padding: 7px;
   border-radius: 5px;
   border: 1px solid #2a2e39;
+}
+
+.metric-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.metric-card {
+  background-color: #1e222d17;
+  border: 1px solid #2a2e39;
+  border-radius: 8px;
+  padding: 8px;
+  flex: 1;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.metric-title {
+  color: #8b949e;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.metric-value {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.metric-delta-pos {
+  color: #29f075;
+  font-size: 13px;
+}
+
+.metric-delta-neg {
+  color: #cc4974;
+  font-size: 13px;
 }

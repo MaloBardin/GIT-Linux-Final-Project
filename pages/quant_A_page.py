@@ -27,6 +27,23 @@ def local_css(file_name):
 
 local_css("style.css")
 
+def barre_menu():
+    col1, col2,col3,col4,col6= st.columns(5)
+    with col1:
+        st.page_link("pages/home_page.py", label="Dashboard", use_container_width=True)
+    with col2:
+        st.page_link("pages/quant_A_page.py", label="Single Asset", use_container_width=True)
+        
+    with col3:
+        st.page_link("pages/pflanding.py", label="Portfolio simulation", use_container_width=True)
+
+    with col6:
+        if st.button("📩 Subscribe to the daily report !", use_container_width=True):
+            show_newsletter_popup()
+
+
+barre_menu()
+
 def load_tickers(filename="tickers.json"):
     if not os.path.exists(filename):
         return {"AAPL": "Apple Inc.", "TSLA": "Tesla", "GC=F": "Gold", "^FCHI": "CAC 40"}
