@@ -517,7 +517,7 @@ def RunBacktest(hold=1, hist=3, proportion=3, confidence=0.2,ModifiedLambda=Fals
     RfDf = GetRfDataframe(df)
     final=Backtester(dfbacktest, hold=hold, hist=hist, proportion=proportion, df_toBL=df,RfDf=RfDf,confidence2=confidence,proportion2=proportion,tau2=tau,Lambda2=Lambda,start=181,modifiedlambda=ModifiedLambda)
 
-    final.to_csv("backtest_bl.csv")
+    final.to_csv("data/backtest_bl.csv")
 
 def getPrintableDf(final,data,selection):
     df_combined = pd.DataFrame()
