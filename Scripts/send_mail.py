@@ -8,7 +8,8 @@ import pandas as pd
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
-DATA_FILE = os.path.join(BASE_DIR, "data", "data3y.csv")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_FILE = os.path.join(DATA_DIR, "data3y.csv")
 
 REPORT_DIR = os.path.join(BASE_DIR,"reports")
 SUBSCRIBERS_FILE = "subscribers.txt"
