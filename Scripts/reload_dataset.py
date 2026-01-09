@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import os
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import traceback
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
@@ -68,7 +69,7 @@ def update_max_df():
 
 def update_last_updated():
     try:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.now(ZoneInfo("Europe/Paris")).strftime("%Y-%m-%d %H:%M:%S")
         with open(LAST_UPDATED_FILE, "w", encoding="utf-8") as f:
             f.write(now)
         print(f"[INFO] Last updated timestamp saved: {now}")
