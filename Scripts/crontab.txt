@@ -5,8 +5,8 @@ Here are the crontab code lines to be pasted :
 # We need to execute the Scripts directly inside the container : 
 ## Every day at 00:00 we send the report and every 5 minutes we reload the data :
 
-00 00 * * * docker exec -it streamlit-app /usr/local/bin/python3 /app/Scripts/send_mail.py
-*/5 * * * * docker exec -it streamlit-app /usr/local/bin/python3 /app/Scripts/reload_dataset.py
+00 00 * * * docker exec streamlit-app /usr/local/bin/python3 /app/Scripts/send_mail.py
+*/5 * * * * docker exec streamlit-app /usr/local/bin/python3 /app/Scripts/reload_dataset.py
 
 # To open crontab : 
 crontab -e
