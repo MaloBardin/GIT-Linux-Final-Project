@@ -1,8 +1,9 @@
 import streamlit as st
 import os
 import datetime
-from grabbing_dataframe import UpdateDfMax
+from Scripts.reload_dataset import reload_all_data, get_last_updated
 from mailsending import show_newsletter_popup
+import time
 
 def local_css(file_name):
     try:
@@ -26,16 +27,12 @@ def barre_menu():
             show_newsletter_popup()
             
     with col7:
-        if os.path.exists('cac40_history.csv'):
-            file_time = os.path.getmtime('cac40_history.csv')
-            last_date = datetime.datetime.fromtimestamp(file_time).strftime('%d/%m at %H:%M')
-            last_update_msg = f"Last Update : {last_date}"
-
+        last_update_msg = f"Last Update : {get_last_updated()}"
         if st.button("🔄 Reload Data", help=last_update_msg, use_container_width=True):
             with st.spinner(''):
-                UpdateDfMax()
+                reload_all_data()
                 st.toast("Data reloaded with success !", icon="✅")
-                import time
+                
                 time.sleep(0.5)
                 st.rerun()
 

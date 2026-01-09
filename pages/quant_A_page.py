@@ -12,7 +12,7 @@ from quant_A_utils import (
     bollinger_bands_strategy,
     rsi_strategy,
     macd_strategy,
-    predict_future_only,
+    predict_prophet,
     performance_metrics,
     predict_arima
 )
@@ -73,12 +73,32 @@ with col_right:
         )
 
         ticker = display_options[selected_label]
-        start_date = st.date_input("Start", value=dt.date(2023, 1, 1))
-        end_date = st.date_input("End", value=dt.date(2025, 1, 1))
+        interval = st.selectbox("Interval", ["1min", "1d"], index=1)
+        today = dt.date.today()
+        if interval == "1min":
+            start_date = today - dt.timedelta(days=7)
+            end_date = today
+
+            st.date_input(
+                "Start",
+                value=start_date,
+                min_value=start_date,
+                max_value=start_date,
+                disabled=True
+            )
+            st.date_input(
+                "End",
+                value=end_date,
+                min_value=end_date,
+                max_value=end_date,
+                disabled=True
+            )
+        else:
+            start_date = st.date_input("Start", value=dt.date(2023, 1, 1))
+            end_date = st.date_input("End", value=dt.date(2025, 1, 1))
         if start_date >= end_date:
             st.error("Error: End date must fall after start date.")
             st.stop()
-        interval = "1d"
 
         risk_free_rate = st.slider("Risk Free rate (%)", 0.0, 15.0, 6.0, 0.1) / 100
         transaction_cost = st.slider("Transaction Cost (%)", 0.0, 5.0, 0.1, 0.05) / 100
@@ -112,7 +132,7 @@ with col_left:
             start_date_str = start_date.strftime("%Y-%m-%d")
             end_date_str = end_date.strftime("%Y-%m-%d")
 
-            df = get_data(ticker, start_date_str, end_date_str)
+            df = get_data(ticker, start_date_str, end_date_str, interval)
 
             if df.empty:
                 st.error("No data found for this ticker.")
@@ -196,17 +216,30 @@ col_pred_left, col_pred_right = st.columns([1, 4], gap="medium")
 with col_pred_left:
     with st.container(border=True):
         st.write("**Configuration**")
-        pred_model = st.selectbox("Model", ["Prophet", "ARIMA"])
-        pred_days = st.slider("Forecast Period (days)", 7, 365, 45)
+        # We only use ARIMA for 1-minute data due to Prophet limitations
+        if interval == "1min":
+            pred_model = st.selectbox(
+                "Model",
+                ["ARIMA"],
+                index=0
+            )
+        else:
+            pred_model = st.selectbox(
+                "Model",
+                ["Prophet", "ARIMA"],
+                index=0
+            )
+        periods = st.slider("Forecast Period", 1, 400, 45)
 
 
 with col_pred_right:
+    unit = "minutes" if interval == "1min" else "days"
     with st.container(border=True):
         with st.spinner("Generating prediction..."):
             if pred_model == "Prophet":
-                forecast = predict_future_only(df, days=pred_days)
+                forecast = predict_prophet(df, periods=periods, interval = interval)
             else:
-                forecast = predict_arima(df, days=pred_days)
+                forecast = predict_arima(df, periods=periods, interval = interval)
 
             last_hist_date = df.index[-1]
             
@@ -226,12 +259,12 @@ with col_pred_right:
             fig_pred.add_trace(go.Scatter(
                 x=forecast['ds'], y=forecast['yhat_lower'], mode='lines',
                 line=dict(width=0), fill='tonexty', fillcolor='rgba(0, 230, 118, 0.2)',
-                showlegend=False, name='Confidence Interval'
+                showlegend=True, name='Confidence Interval'
             ))
             fig_pred.add_vline(x=last_hist_date, line_width=1, line_dash="dash", line_color="white")
             
             fig_pred.update_layout(
-                title=f"Forecast ({pred_days} days)",
+                title=f"Forecast ({periods} {unit}) using {pred_model}",
                 xaxis_title="Date", yaxis_title="Price", 
                 template="plotly_dark", hovermode="x unified",
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),

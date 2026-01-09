@@ -7,6 +7,13 @@ import streamlit as st
 import os
 
 FILE_NAME = "cac40_history.csv"
+
+DATA_DIR = "data"
+FILE_MAX = os.path.join(DATA_DIR, "cac40_history.csv")
+FILE_3Y = os.path.join(DATA_DIR, "data3y.csv")
+FILE_7D = os.path.join(DATA_DIR, "data7d.csv")
+
+
 cac40 = [
         '^FCHI', 'AI.PA', 'AIR.PA', 'ALO.PA', 'BN.PA', 'BNP.PA', 'CA.PA',
         'CAP.PA', 'CS.PA', 'DG.PA', 'DSY.PA', 'EL.PA', 'EN.PA', 'ENGI.PA',
@@ -16,22 +23,15 @@ cac40 = [
         'TTE.PA', 'VIE.PA', 'VIV.PA', 'WLN.PA'
     ]
 
-def UpdateDfMax():
-
-    df = yf.download(cac40, period='max', interval='1d')['Close']
-    df = df.reset_index()
-    df.rename(columns={'^FCHI': 'Cac40'}, inplace=True)
-    cols = [c for c in df.columns if c not in ['Date', 'Cac40']]
-    df = df[['Date', 'Cac40'] + cols]
-    
-    df = df.drop_duplicates(subset=['Date'])
-    df.to_csv(FILE_NAME, index=False)
-    
+@st.cache_data
+def ReadDfMax():
+    df = pd.read_csv(FILE_MAX)
+    df['Date'] = pd.to_datetime(df['Date'])
     return df
 
 @st.cache_data
-def ReadDfMax():
-    df = pd.read_csv(FILE_NAME)
+def ReadDf1Min():
+    df = pd.read_csv(FILE_7D)
     df['Date'] = pd.to_datetime(df['Date'])
     return df
 
@@ -57,7 +57,6 @@ def ReadDf():
     return df
 
 
-df=ReadDf()
 
 name_map = {
     'AI.PA': 'Air Liquide',
@@ -147,53 +146,6 @@ df_dash=GetDfForDashboard(Dfcleaning(ReadDf()))
 
 
 
-def getInfoperTicker(df,ticker):
-    longtimedata=df[["Date",ticker]]
-    latestdate=df['Date'].dt.date.iloc[df.index[-1]]
-
-    #request on yfinance to get the 5min data for today
-    key_ticker=[ a for a, b in name_map.items() if b == ticker]
-
-    intraday_data=yf.download(key_ticker[0], period='1d', interval="1m")[['Close', 'Volume']]
-    intraday_data=intraday_data.reset_index()
-
-    time_list=[]
-    price_list=[]
-    volume_list=[]
-
-
-    timespan = pd.date_range(start="08:00",end="16:29",freq='1min')
-    time_list = timespan.strftime('%H:%M').tolist()
-
-    for i in range(len(time_list)):
-        volume_list.append(np.nan)
-        price_list.append(np.nan) # a fix for later decalage issue
-
-    volume_list[0]=(intraday_data.iloc[0,2]) #first vol
-
-    for i in range(1,len(intraday_data)):
-        volume_list[i]=volume_list[i-1]+intraday_data.iloc[i,2]
-        price_list[i]=intraday_data.iloc[i,1]
-
-
-
-    for i in range(len(intraday_data)):
-
-        price_list.append(intraday_data.iloc[i,1])
-    short_df=pd.DataFrame()
-    short_df["Time"]=time_list
-    short_df["Volume"]=volume_list
-
-
-    sevendays_data=yf.download(key_ticker[0], period='7d', interval="1h")[['Close', 'Volume']]
-    onemonth_data=yf.download(key_ticker[0], period='30d', interval="1h")[['Close', 'Volume']]
-
-    isoverbuying=(100*intraday_data.iloc[-1,1])/onemonth_data['Close'].mean()-100
-
-
-
-
-    return short_df, sevendays_data, onemonth_data, isoverbuying
 
 def flatten_columns(df):
     if isinstance(df.columns, pd.MultiIndex):
@@ -229,8 +181,13 @@ def getDfForGraph(df, dayforgraphlookback=30):
 
 
 @st.cache_data
-def get_data(ticker, start, end):
-    df = ReadDfMax()
+def get_data(ticker, start, end, interval='1d'):
+    print(interval)
+    if interval == '1min':
+        df = ReadDf1Min()
+    else:
+        df = ReadDfMax()
+
     df['Date'] = pd.to_datetime(df['Date'])
     df = df.set_index('Date')
     df = df[(df.index >= start) & (df.index < end)]
