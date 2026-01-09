@@ -52,6 +52,7 @@ The associated python file (VVE.py) is very large and wasn't created for this pr
 THe data is collected automaticly every 5min using cron and the python librairie yfinance. Since we don't want to spam API request, we manage to have an intelligent request that will only add the data if it's missing. We did manage to get a working VBA Bloomberg code to get the csv data we need for our project but since we have hosted it on a VM, it doesn't have the access on the Bloomberg API (we can only use it on a computer school). You can find the VBA code here and we also added a little python script for the blpapi librairie
 
 <img width="1033" height="628" alt="image" src="https://github.com/user-attachments/assets/5ca10d11-3385-4fe8-9b50-e60fb311f167" />
+<img width="1475" height="878" alt="image" src="https://github.com/user-attachments/assets/47995939-fe25-4989-a6ce-10ae14f41639" />
 
 VBA code : 
 
