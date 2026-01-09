@@ -32,19 +32,16 @@ def LinuxEveryDayAtNight():
 
 
 def LinuxRunEveryFiveMin():
-
-    quickdf=GetQuickDf()
+    from datetime import datetime
     histdf=pd.read_csv("cac40_history.csv")
     histdf["Date"] = pd.to_datetime(histdf["Date"])
     histdf["Date"].dt.strftime('%Y-%m-%d')
-    if quickdf["Date"].iloc[-1]==histdf["Date"].iloc[-1]:
-        print("not added no new data")
-        pass
-    else :
-        print("added new data")
+    if histdf["Date"].iloc[-1]!=datetime.date.today():
+        quickdf = GetQuickDf()
         histdf = pd.concat([histdf, quickdf])
         histdf["Date"] = pd.to_datetime(histdf["Date"])
         histdf["Date"].dt.strftime('%Y-%m-%d')
-        histdf.to_csv("cac40_history.csv",index=False)
+        histdf.to_csv("cac40_history.csv", index=False)
+
 
 
