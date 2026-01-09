@@ -47,7 +47,83 @@ The associated python file (VVE.py) is very large and wasn't created for this pr
 
 ---
 
-### 5) Fully hosted on Microsoft Azure using Docker
+### 5) Yfinance and Bloomberg API data
+
+THe data is collected automaticly every 5min using cron and the python librairie yfinance. Since we don't want to spam API request, we manage to have an intelligent request that will only add the data if it's missing. We did manage to get a working VBA Bloomberg code to get the csv data we need for our project but since we have hosted it on a VM, it doesn't have the access on the Bloomberg API (we can only use it on a computer school). You can find the VBA code here and we also added a little python script for the blpapi librairie
+
+<img width="1033" height="628" alt="image" src="https://github.com/user-attachments/assets/5ca10d11-3385-4fe8-9b50-e60fb311f167" />
+
+VBA code : 
+
+    Sub Datagrab
+    Dim ws As Worksheet
+    Dim ArrTickers As Variant
+    Dim i As Long
+
+    Set ws = ThisWorkbook.Sheets(1)
+    ws.Cells.Clear
+
+    ArrTickers = Array( _
+        "CAC Index", _
+        "AI FP Equity", "AIR FP Equity", "MT NA Equity", "CS FP Equity", "BNP FP Equity", "EN FP Equity", _
+        "CAP FP Equity", "CA FP Equity", "ACA FP Equity", "BN FP Equity", "DSY FP Equity", "EDEN FP Equity", _
+        "ENGI FP Equity", "EL FP Equity", "ERF FP Equity", "RMS FP Equity", "KER FP Equity", "OR FP Equity", _
+        "LR FP Equity", "MC FP Equity", "ML FP Equity", "ORA FP Equity", "RI FP Equity", "PUB FP Equity", _
+        "RNO FP Equity", "SAF FP Equity", "SGO FP Equity", "SAN FP Equity", "SU FP Equity", "GLE FP Equity", _
+        "STLAP FP Equity", "STMPA FP Equity", "TTE FP Equity", "HO FP Equity", "URW NA Equity", "VIE FP Equity", _
+        "DG FP Equity", "VIV FP Equity", "WLN FP Equity", "AC FP Equity")
+
+ 
+    ws.Cells(1, 1).Value = "Date"
+
+    For i = LBound(ArrTickers) To UBound(ArrTickers)
+        ws.Cells(1, i + 2).Value = ArrTickers(i)
+    Next i
+
+    ws.Cells(2, 1).Formula = _
+        "=BDH(""" & ArrTickers(0) & """,""PX_LAST"",""-3AY"","""",""Fill=P"")"
+
+    For i = 1 To UBound(ArrTickers)
+        ws.Cells(2, i + 2).Formula = _
+            "=BDH(""" & ArrTickers(i) & """,""PX_LAST"",""-3AY"","""",""Dates=H"",""Fill=P"")"
+    Next i
+    End Sub
+
+Python Code :
+
+    from xbbg import blp
+    TICKERS = [
+        "CAC Index",
+        "AI FP Equity", "AIR FP Equity", "MT NA Equity", "CS FP Equity", "BNP FP Equity",
+        "EN FP Equity", "CAP FP Equity", "CA FP Equity", "ACA FP Equity", "BN FP Equity",
+        "DSY FP Equity", "EDEN FP Equity", "ENGI FP Equity", "EL FP Equity", "ERF FP Equity",
+        "RMS FP Equity", "KER FP Equity", "OR FP Equity", "LR FP Equity", "MC FP Equity",
+        "ML FP Equity", "ORA FP Equity", "RI FP Equity", "PUB FP Equity", "RNO FP Equity",
+        "SAF FP Equity", "SGO FP Equity", "SAN FP Equity", "SU FP Equity", "GLE FP Equity",
+        "STLAP FP Equity", "STMPA FP Equity", "TTE FP Equity", "HO FP Equity",
+        "URW NA Equity", "VIE FP Equity", "DG FP Equity", "VIV FP Equity",
+        "WLN FP Equity", "AC FP Equity"
+    ]
+    
+    FIELD = "PX_LAST"
+    START_DATE = (datetime.today() - timedelta(days=3*365)).strftime("%Y%m%d")
+    END_DATE = datetime.today().strftime("%Y%m%d")
+    df = blp.bdh(
+            tickers=tickers,
+            flds="PX_LAST",
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=today.strftime('%Y-%m-%d'),
+            Per="D",
+            Fill="P",   
+            Days="A"
+        )
+
+    df.to_csv(data3y.csv)
+
+As we said, since we've hosted our project on a virtual machine, theses codes aren't working and are just for educational purposes only.
+    
+
+### 6) Fully hosted on Microsoft Azure using Docker
 
 The application is fully containerized and deployed using **Docker**, ensuring reproducibility, scalability, and ease of deployment.  
 It is hosted on Microsoft Azure, providing a reliable cloud infrastructure suitable for production-level financial applications.
