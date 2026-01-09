@@ -7,7 +7,7 @@ Here are the crontab code lines to be pasted :
 ## Every day at 00:00 we send the report and every 5 minutes we reload the data :
 
 00 00 * * * /home/azureuser/GIT-Linux-Final-Project/venv/bin/python /home/azureuser/GIT-Linux-Final-Project/Scripts/send_mail.py
-*/5 * * * * * /home/azureuser/GIT-Linux-Final-Project/venv/bin/python /home/azureuser/GIT-Linux-Final-Project/Scripts/reload_dataset.py
+*/5 * * * * /home/azureuser/GIT-Linux-Final-Project/venv/bin/python /home/azureuser/GIT-Linux-Final-Project/Scripts/reload_dataset.py
 
 You can replace the path.
 
