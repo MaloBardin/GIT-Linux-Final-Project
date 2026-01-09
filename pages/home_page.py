@@ -11,7 +11,7 @@ query_params = st.query_params
 
 local_css("style.css")
 barre_menu()
-LinuxRunEveryFiveMin()
+
 #newsltter popup
 
 
