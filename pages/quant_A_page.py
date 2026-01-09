@@ -101,7 +101,7 @@ with col_right:
             st.stop()
 
         risk_free_rate = st.slider("Risk Free rate (%)", 0.0, 15.0, 6.0, 0.1) / 100
-        transaction_cost = st.slider("Transaction Cost (%)", 0.0, 5.0, 0.1, 0.05) / 100
+        transaction_cost = st.slider("Transaction Cost (%)", 0.0, 5.0, 0.0, 0.05) / 100
 
         strategy_choice = st.selectbox(
             "Strategy", 
