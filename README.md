@@ -159,7 +159,7 @@ docker build -t streamlit-app .
 To run the application and see logs in the terminal:
 
 ```bash
-docker run -d --name streamlit-app -p 8501:8501 streamlit-app
+docker run -d --name streamlit-app -p 8501:8501 --restart unless-stopped streamlit-app
 
 ```
 
