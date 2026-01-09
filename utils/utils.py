@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import datetime
 from Scripts.reload_dataset import reload_all_data, get_last_updated
-from mailsending import show_newsletter_popup
+from utils.mailsending import show_newsletter_popup
 import time
 
 def local_css(file_name):

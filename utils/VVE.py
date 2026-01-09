@@ -9,9 +9,8 @@ import yfinance as yf
 import streamlit as st
 from streamlit import columns
 warnings.filterwarnings("ignore")
-import streamlit as st
 import os
-from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
+from utils.grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
 #%%
 
 

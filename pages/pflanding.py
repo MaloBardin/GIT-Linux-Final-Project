@@ -72,14 +72,12 @@ with col_info:
 #split the page into two columns : graph on left and parameters on right
 col_gauche, col_droite = st.columns([3, 1], gap="medium")
 
+#load data
 df_backtest=pd.read_csv(os.path.join("data",'backtest_bl.csv'))
 df_3ydata=pd.read_csv(os.path.join("data",'data3y.csv'))
+
+
 #sliders
-#load data
-df_backtest=pd.read_csv('backtest_bl.csv')
-df_3ydata=pd.read_csv('data3y.csv')
-
-
 with col_droite:
     # sliders for backtesting
     with st.container(border=True):
