@@ -3,7 +3,7 @@ import pandas as pd
 import math
 from grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph, GetDf
 from mailsending import show_newsletter_popup,callforlinux
-from utils import local_css, barre_menu
+from utils.utils import local_css, barre_menu
 from ForLinux import LinuxRunEveryFiveMin
 #callforlinux()
 #LinuxRunEveryFiveMin()
@@ -152,7 +152,7 @@ table_container = st.container(border=True)
 #navigation for the pages of the table
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1:
-    if st.button("Previous", disabled=(st.session_state.page_number == 0), use_container_width=True):
+    if st.button("Previous", disabled=(st.session_state.page_number == 0), width='stretch'):
         st.session_state.page_number -= 1
         st.rerun()
 
@@ -165,7 +165,7 @@ with col2:
     )
 
 with col3:
-    if st.button("Next", disabled=(current_page >= total_pages), use_container_width=True):
+    if st.button("Next", disabled=(current_page >= total_pages), width='stretch'):
         st.session_state.page_number += 1
         st.rerun()
 

@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from VVE import getPrintableDf,GetDf,runEveryDay
-from VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,plot_multirun_static,plot_max_drawdown
+from utils.VVE import getPrintableDf,GetDf,runEveryDay
+from utils.VVE import RunBacktest,GetInfoOnBacktest,getCorrelationMatrix,dailyvol,calculate_sharpe_ratio,calculate_historical_var_es,multirun,plot_multirun_static,plot_max_drawdown
 import plotly.express as px
 import warnings
 warnings.filterwarnings("ignore")
 import time
 from mailsending import show_newsletter_popup
-from utils import local_css, barre_menu
+from utils.utils import local_css, barre_menu
 
 
 local_css("style.css")
@@ -87,7 +87,7 @@ with col_droite:
 
 
     with st.container(border=False):
-        if st.button("Run backtest", type="primary", use_container_width=True):
+        if st.button("Run backtest", type="primary", width='stretch'):
             with st.spinner('⏳ Running backtest, please wait...'):
                 RunBacktest(hold_param, hist_param, numberviews_param, confidence_param,DynamicLambda)
                 st.success("✅ Backtest finished !")
@@ -146,7 +146,7 @@ with col_droite:
         file_time = os.path.getmtime('data3y.csv')
         last_date = datetime.datetime.fromtimestamp(file_time).strftime('%d/%m/%Y at %H:%M')
         st.caption(f"📅 Last update : **{last_date}**")
-        if st.button("Get the new data !", use_container_width=True):
+        if st.button("Get the new data !", width='stretch'):
             with st.spinner('⏳ Refreshing data, please wait...'):
                 runEveryDay()
                 st.success("✅ Data refreshed !")

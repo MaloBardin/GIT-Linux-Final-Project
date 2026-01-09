@@ -4,9 +4,9 @@ import datetime as dt
 import plotly.graph_objects as go
 import json
 import os
-from grabbing_dataframe import get_data
+from utils.grabbing_dataframe import get_data
 
-from quant_A_utils import (
+from utils.quant_A_utils import (
     long_moving_average,
     double_moving_average,
     bollinger_bands_strategy,
@@ -16,14 +16,14 @@ from quant_A_utils import (
     performance_metrics,
     predict_arima
 )
-from mailsending import show_newsletter_popup
-from utils import local_css, barre_menu
+from utils.mailsending import show_newsletter_popup
+from utils.utils import local_css, barre_menu
 
 
 local_css("style.css")
 barre_menu()
 
-def load_tickers(filename="tickers.json"):
+def load_tickers(filename=os.path.join("data", "tickers.json")):
     with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -58,7 +58,6 @@ with col_right:
 
         if "ticker" in st.query_params:
             query_ticker = st.query_params["ticker"]
-            print("query ticker : ", query_ticker)
             found_label = next((k for k, v in display_options.items() if v == query_ticker), None)
             
             if found_label:
@@ -193,7 +192,7 @@ with col_left:
                         hovermode='x unified', template='plotly_dark',
                         height=500
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                 # Metrics
                 with st.container(border=True):
@@ -270,6 +269,6 @@ with col_pred_right:
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 height=400
             )
-            st.plotly_chart(fig_pred, use_container_width=True)
+            st.plotly_chart(fig_pred, width='stretch')
 
 

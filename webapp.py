@@ -17,12 +17,12 @@ def barre_menu():
 
     with col1:
         # Lien vers la page principale (le fichier actuel)
-        st.page_link("accueil.py", label="🏠 Accueil", use_container_width=True)
+        st.page_link("accueil.py", label="🏠 Accueil", width='stretch')
 
     with col2:
         # Lien vers la page dans le dossier 'pages'
         # ATTENTION : Le fichier doit exister dans le dossier 'pages' !
-        st.page_link("pages/ma_page_2.py", label="🚀 Vers Page 2", use_container_width=True)
+        st.page_link("pages/ma_page_2.py", label="🚀 Vers Page 2", width='stretch')
 
     st.divider()  # Une ligne pour séparer
 

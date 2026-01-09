@@ -25,7 +25,6 @@ CAC40= [
 def update_1min_df():
     df = yf.download(CAC40, period="7d", interval="1m")["Close"]
     df = df.reset_index()
-    print(df.tail())
     df.columns = df.columns.str.replace('^FCHI', 'Cac40')
     df.columns = df.columns.str.replace('Datetime', 'Date')
     other_columns = [col for col in df.columns if col not in ['Date', 'Cac40']]
@@ -67,7 +66,12 @@ def get_last_updated():
         return None
 
     with open(LAST_UPDATED_FILE, "r", encoding="utf-8") as f:
-        return datetime.strptime(f.read().strip(), "%Y-%m-%d %H:%M:%S")
+        date_str = f.read().strip()
+
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
 
 
 def reload_all_data():
