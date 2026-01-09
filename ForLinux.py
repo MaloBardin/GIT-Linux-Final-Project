@@ -32,16 +32,21 @@ def LinuxEveryDayAtNight():
 
 
 def LinuxRunEveryFiveMin():
+    import pandas as pd
     from datetime import datetime
-    histdf=pd.read_csv("cac40_history.csv")
+    histdf = pd.read_csv("cac40_history.csv")
     histdf["Date"] = pd.to_datetime(histdf["Date"])
-    histdf["Date"].dt.strftime('%Y-%m-%d')
-    if histdf["Date"].iloc[-1]!=datetime.date.today():
+    
+    current = datetime.now().date()
+    current = current.strftime('%Y-%m-%d')
+
+    if histdf["Date"].dt.strftime('%Y-%m-%d').iloc[-1] != current:
+        print("NEW DATA NEEDED")
         quickdf = GetQuickDf()
         histdf = pd.concat([histdf, quickdf])
         histdf["Date"] = pd.to_datetime(histdf["Date"])
-        histdf["Date"].dt.strftime('%Y-%m-%d')
+        histdf["Date"] = histdf["Date"].dt.strftime('%Y-%m-%d')
         histdf.to_csv("cac40_history.csv", index=False)
-
-
+    else:
+        print("DATA IS UP TO DATE")
 

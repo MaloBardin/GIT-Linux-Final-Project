@@ -6,6 +6,7 @@ from mailsending import show_newsletter_popup,callforlinux
 from utils import local_css, barre_menu
 from ForLinux import LinuxRunEveryFiveMin
 #callforlinux()
+LinuxRunEveryFiveMin()
 #setup
 query_params = st.query_params
 
@@ -92,17 +93,17 @@ avg_color = "metric-delta-pos" if avg_return >= 0 else "metric-delta-neg"
 st.markdown(f"""
 <div class="metric-container">
     <div class="metric-card">
-        <div class="metric-title">🔥 Top Performer</div>
+        <div class="metric-title">Top Performer</div>
         <div class="metric-value">{best_performer['Ticker']}</div>
         <div class="metric-delta-pos">+{best_performer['Return_1d']:.2f}%</div>
     </div>
     <div class="metric-card">
-        <div class="metric-title">🧊 Worst Performer</div>
+        <div class="metric-title">Worst Performer</div>
         <div class="metric-value">{worst_performer['Ticker']}</div>
         <div class="metric-delta-neg">{worst_performer['Return_1d']:.2f}%</div>
     </div>
     <div class="metric-card">
-        <div class="metric-title">📊 Market Avg</div>
+        <div class="metric-title">Market Avg</div>
         <div class="metric-value">{avg_return:.2f}%</div>
         <div class="{avg_color}">Global Trend</div>
     </div>
