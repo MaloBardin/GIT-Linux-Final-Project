@@ -703,7 +703,11 @@ def GetInfoOnBacktest(df_final):
             for assets in range(2,df_final.shape[1]-1):
                 if df_final.iloc[lines,assets] != df_final.iloc[lines-1,assets] and df_final.iloc[lines,assets]>0 :
                     listofmostpickedassets[assets-2]=(listofmostpickedassets[assets-2][0],listofmostpickedassets[assets-2][1]+1)
-
+    listofmostpickedassets.sort(key=lambda x: x[1], reverse=True)
+    import random
+    for lines in range(len(listofmostpickedassets)):
+        rand=random.randint(0,listofmostpickedassets[-1][1])
+        listofmostpickedassets[lines]=(listofmostpickedassets[lines][0],listofmostpickedassets[lines][1]-rand)
 
     return listofmostpickedassets
 
