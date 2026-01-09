@@ -4,8 +4,10 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
 
-DATA_DIR = "data"
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
 FILE_MAX = os.path.join(DATA_DIR, "cac40_history.csv")
 FILE_3Y = os.path.join(DATA_DIR, "data3y.csv")
 FILE_7D = os.path.join(DATA_DIR, "data7d.csv")
