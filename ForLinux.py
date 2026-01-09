@@ -36,7 +36,7 @@ def LinuxRunEveryFiveMin():
     from datetime import datetime
     histdf = pd.read_csv("cac40_history.csv")
     histdf["Date"] = pd.to_datetime(histdf["Date"])
-    
+
     current = datetime.now().date()
     current = current.strftime('%Y-%m-%d')
 
