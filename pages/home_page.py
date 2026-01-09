@@ -1,22 +1,18 @@
 import streamlit as st
 import pandas as pd
 import math
-from grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph, GetDf
-from mailsending import show_newsletter_popup,callforlinux
+from utils.grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph
+from utils.mailsending import show_newsletter_popup,callforlinux
 from utils.utils import local_css, barre_menu
-from ForLinux import LinuxRunEveryFiveMin
-#callforlinux()
-#LinuxRunEveryFiveMin()
+
+
 #setup
 query_params = st.query_params
-
 local_css("style.css")
-barre_menu()
-
-#newsltter popup
-
-
 st.set_page_config(layout="wide")
+
+#nav bar
+barre_menu()
 
 # graph generation
 def generate_sparkline(data):
@@ -46,12 +42,10 @@ def generate_sparkline(data):
     return svg
 
 
-#header
+#header part with moving price
 df_total = GetDfForDashboard(Dfclean(ReadDfMax()))
-
 df2 = df_total.copy()
 formatted_list = []
-
 for index, row in df2.iterrows():
     ticker = row['Ticker']
     price = row['Price'] 
@@ -114,7 +108,7 @@ st.markdown(f"""
 col_search, col_sort = st.columns([3, 1])
 
 with col_search:
-    search_query = st.text_input("🔍 Search Ticker", placeholder="🔍 Search Ticker", label_visibility="collapsed")
+    search_query = st.text_input("Search Ticker", placeholder="Search Ticker", label_visibility="collapsed")
 
 with col_sort:
     sort_option = st.selectbox("Sort by", ["Price Desc", "Price Asc", "Return 1D Desc", "Return 1D Asc" ], label_visibility="collapsed")
@@ -122,6 +116,7 @@ with col_sort:
 if search_query:
     df_total = df_total[df_total['Ticker'].str.contains(search_query.upper(), na=False)]
 
+#filters part
 if sort_option == "Return 1D Desc":
     df_total = df_total.sort_values(by="Return_1d", ascending=False)
 elif sort_option == "Return 1D Asc":
@@ -136,13 +131,9 @@ if search_query or sort_option:
         st.session_state.page_number = 0
         st.session_state.last_search = search_query
 
-
-
 ROWS_PER_PAGE = 10
-
 if 'page_number' not in st.session_state:
     st.session_state.page_number = 0
-
 total_pages = math.ceil(len(df_total) / ROWS_PER_PAGE)
 current_page = st.session_state.page_number + 1
 
@@ -171,7 +162,6 @@ with col3:
 
 start_index = st.session_state.page_number * ROWS_PER_PAGE
 end_index = start_index + ROWS_PER_PAGE
-
 df_page = df_total.iloc[start_index:end_index].copy()
 
 
@@ -179,18 +169,15 @@ df_page = df_total.iloc[start_index:end_index].copy()
 #graph data preparation
 df_graph = getDfForGraph(Dfclean(ReadDfMax()))
 
+#get the history list for each ticker
 def get_history_list(ticker_name):
     if ticker_name in df_graph.columns:
         prices = df_graph[ticker_name].tolist()
         return prices
-
-
 df_page['History_List'] = df_page['Ticker'].apply(get_history_list)
 df_page['Graph'] = df_page['History_List'].apply(generate_sparkline)
 
-
 current_rows_on_page = len(df_page)
-
 if current_rows_on_page < ROWS_PER_PAGE:
     rows_to_add = ROWS_PER_PAGE - current_rows_on_page
     empty_df = pd.DataFrame({col: [""] * rows_to_add for col in df_page.columns}) 
@@ -220,7 +207,7 @@ def color_price(val): #swap the color if negative or positive return
         return ''
     return f'color: {color}; '
 
-
+#clickable button to open the single asset page with the selected asset
 def make_clickable(row):
     if not row['Ticker']:
         row['Button'] = ""
@@ -263,11 +250,8 @@ with table_container:
     st.markdown(html_table, unsafe_allow_html=True)
     st.write("")
 
-#REPORT GENERATION, WE DID IT HERE SINCE WE HAVE ALL THE DATA LOADED ALREADY
 
-
-
- # to test
+#to test
 #st.download_button(label="bouton test",data=generatereport(),file_name="market_summary.html",mime="text/html")
 
 

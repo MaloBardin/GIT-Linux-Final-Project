@@ -6,10 +6,9 @@ import plotly.express as px
 from fredapi import Fred
 import warnings
 import yfinance as yf
-from streamlit import columns
-
-warnings.filterwarnings("ignore")
 import streamlit as st
+from streamlit import columns
+warnings.filterwarnings("ignore")
 
 from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
 #%%
