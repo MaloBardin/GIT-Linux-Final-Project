@@ -7,38 +7,9 @@ from fredapi import Fred
 import warnings
 import yfinance as yf
 warnings.filterwarnings("ignore")
-from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
-#%%
-def GetDf():
-    # tickers cac40
-    cac40 = [
-        '^FCHI','AI.PA', 'AIR.PA', 'ALO.PA', 'BN.PA', 'BNP.PA', 'CA.PA',
-        'CAP.PA', 'CS.PA', 'DG.PA', 'DSY.PA', 'EL.PA', 'EN.PA', 'ENGI.PA',
-        'ERF.PA', 'GLE.PA', 'HO.PA', 'KER.PA', 'LR.PA', 'MC.PA', 'ML.PA',
-        'OR.PA', 'ORA.PA', 'PUB.PA', 'RCO.PA', 'RI.PA', 'RMS.PA', 'SAF.PA',
-        'SAN.PA', 'SGO.PA', 'STMPA.PA', 'SU.PA', 'TEP.PA',
-        'TTE.PA', 'VIE.PA', 'VIV.PA', 'WLN.PA'
-    ]
-
-    df = yf.download(cac40, period='3y', interval='1d')['Close']
-    df.to_csv("data3y.csv")
-    return df
-
-df = GetDf()
-df = df.reset_index()
-df.columns = df.columns.str.replace('^FCHI', 'Cac40')
-
-autres_colonnes = [col for col in df.columns if col not in ['Date', 'Cac40']]
-df = df[['Date', 'Cac40'] + autres_colonnes]
+import os
 
 
-df["Date"] = pd.to_datetime(df["Date"])
-print(df.columns)
-
-#%%
-df
-
-#%%
 def GetReturn(df, date, lookback):
     date = pd.to_datetime(date)
 

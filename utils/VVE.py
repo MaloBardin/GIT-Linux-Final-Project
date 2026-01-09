@@ -10,21 +10,21 @@ from streamlit import columns
 
 warnings.filterwarnings("ignore")
 import streamlit as st
-
+import os
 from grabbing_dataframe import GetDfForDashboard, Dfcleaning, ReadDf
 #%%
 
 
-df=pd.read_csv("data3y.csv")
+df=pd.read_csv(os.path.join("data", "data3y.csv"))
 df.columns = df.columns.str.replace('^FCHI', 'Cac40')
 autres_colonnes = [col for col in df.columns if col not in ['Date', 'Cac40']]
 df = df[['Date', 'Cac40'] + autres_colonnes]
 df["Date"] = pd.to_datetime(df["Date"])
 def runEveryDay():
     df_new = GetDf()
-    df_new.to_csv("data3y.csv", index=False)
+    df_new.to_csv(os.path.join("data", "data3y.csv"), index=False)
     riskfree_df=GetRfDataframe(df_new)
-    riskfree_df.to_csv("riskfree_data.csv")
+    riskfree_df.to_csv(os.path.join("data", "riskfree_data.csv"))
 
 
 
@@ -599,7 +599,7 @@ def dailyvol(final):
 #multiple runs on variable start date :
 def multirun(final,n_simulations=5,progress_bar=None):
     all_results = []
-    RfDf = pd.read_csv("riskfree_data.csv")
+    RfDf = pd.read_csv(os.path.join("data", "riskfree_data.csv"))
     RfDf["Date"] = pd.to_datetime(RfDf["Date"])
     RfDf = RfDf.set_index("Date")
     for i in range(n_simulations):

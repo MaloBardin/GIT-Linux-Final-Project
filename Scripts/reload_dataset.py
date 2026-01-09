@@ -39,8 +39,6 @@ def update_1min_df():
 
 
 
-
-
 def update_max_df():
     df = yf.download(CAC40, period="max", interval="1d")["Close"]
     df = df.reset_index()

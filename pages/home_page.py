@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
 import math
-from grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph, GetDf
-from mailsending import show_newsletter_popup,callforlinux
+from utils.grabbing_dataframe import GetDfForDashboard, Dfclean, ReadDfMax, getDfForGraph
+from utils.mailsending import show_newsletter_popup
 from utils.utils import local_css, barre_menu
-from ForLinux import LinuxRunEveryFiveMin
-#callforlinux()
-#LinuxRunEveryFiveMin()
+
 #setup
 query_params = st.query_params
 

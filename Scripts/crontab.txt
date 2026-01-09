@@ -1,0 +1,11 @@
+Here are the crontab code lines to be pasted :
+
+# We open crontab : 
+crontab -e
+
+## Every day we send the report : 
+0 8 * * * /usr/bin/python3 /chemin/absolu/Scripts/send_mail.py
+
+##Every 5 minutes we reload the data :
+*/5 * * * * /usr/bin/python3 /chemin/absolu/Scripts/reload_dataset.py
+

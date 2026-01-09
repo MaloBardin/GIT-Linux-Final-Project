@@ -2,7 +2,6 @@
 
 LINK : http://20.160.99.10:8501/home_page
 
-
 This project is a **financial analytics and portfolio management web application** focused on the **CAC 40**, combining **market monitoring, quantitative analysis, and systematic portfolio construction**.  
 It is designed to provide both **high-level market insights** and **advanced quantitative tools** through an interactive interface.
 
@@ -40,7 +39,7 @@ It provides detailed historical price evolution, return profiles, volatility, ke
 
 ### 4) Backtesting of a strategy : Black & Litterman with momentum views
 
-The platform includes a*portfolio backtesting module based on the **Black-Litterman framework enhanced with momentum views**. This strategy is a dense and complicated and was developped during Malo's Research project (you can check the github here : https://github.com/MaloBardin/Research-Project and the paper is in publication process).
+The platform includes a\*portfolio backtesting module based on the **Black-Litterman framework enhanced with momentum views**. This strategy is a dense and complicated and was developped during Malo's Research project (you can check the github here : https://github.com/MaloBardin/Research-Project and the paper is in publication process).
 This allows users to backtest the strategy, compare it to benchmark portfolios and other assets, and evaluate performance using risk-adjusted metrics such as drawdowns, volatility, and Sharpe ratios. It also feature a multi run backtesting to proove the robustness of the Black and Litterman allocation.
 The associated python file (VVE.py) is very large and wasn't created for this project, just modified to work with EU data.
 <img width="1778" height="815" alt="image" src="https://github.com/user-attachments/assets/5e4af14f-f03d-424a-8c57-7fed3c108472" />
@@ -54,7 +53,7 @@ THe data is collected automaticly every 5min using cron and the python librairie
 <img width="1033" height="628" alt="image" src="https://github.com/user-attachments/assets/5ca10d11-3385-4fe8-9b50-e60fb311f167" />
 <img width="1475" height="878" alt="image" src="https://github.com/user-attachments/assets/47995939-fe25-4989-a6ce-10ae14f41639" />
 
-VBA code : 
+VBA code :
 
     Sub Datagrab
     Dim ws As Worksheet
@@ -74,7 +73,7 @@ VBA code :
         "STLAP FP Equity", "STMPA FP Equity", "TTE FP Equity", "HO FP Equity", "URW NA Equity", "VIE FP Equity", _
         "DG FP Equity", "VIV FP Equity", "WLN FP Equity", "AC FP Equity")
 
- 
+
     ws.Cells(1, 1).Value = "Date"
 
     For i = LBound(ArrTickers) To UBound(ArrTickers)
@@ -105,7 +104,7 @@ Python Code :
         "URW NA Equity", "VIE FP Equity", "DG FP Equity", "VIV FP Equity",
         "WLN FP Equity", "AC FP Equity"
     ]
-    
+
     FIELD = "PX_LAST"
     START_DATE = (datetime.today() - timedelta(days=3*365)).strftime("%Y%m%d")
     END_DATE = datetime.today().strftime("%Y%m%d")
@@ -115,14 +114,13 @@ Python Code :
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=today.strftime('%Y-%m-%d'),
             Per="D",
-            Fill="P",   
+            Fill="P",
             Days="A"
         )
 
-    df.to_csv(data3y.csv)
+    df.to_csv(DATACSV)
 
 As we said, since we've hosted our project on a virtual machine, theses codes aren't working and are just for educational purposes only.
-    
 
 ### 6) Fully hosted on Microsoft Azure using Docker
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -8,7 +7,7 @@ import os
 import pandas as pd
 from datetime import datetime
 DATA_DIR = "data"
-DATA_FILE = "data3y.csv"
+DATA_FILE = os.path.join(DATA_DIR, "data3y.csv")
 REPORT_DIR = "reports"
 SUBSCRIBERS_FILE = "subscribers.txt"
 
@@ -24,7 +23,7 @@ def generate_report():
     today_date = datetime.now().strftime("%d %B %Y")
 
     #read csv
-    df_total = pd.read_csv("data3y.csv")
+    df_total = pd.read_csv(DATA_FILE)
 
     if "Date" in df_total.columns:
         df_total = df_total.set_index("Date")

@@ -7,8 +7,9 @@ import plotly.express as px
 import warnings
 warnings.filterwarnings("ignore")
 import time
-from mailsending import show_newsletter_popup
+from utils.mailsending import show_newsletter_popup
 from utils.utils import local_css, barre_menu
+import os
 
 
 local_css("style.css")
@@ -67,8 +68,8 @@ with col_info:
 
 col_gauche, col_droite = st.columns([3, 1], gap="medium")
 
-df_backtest=pd.read_csv('backtest_bl.csv')
-df_3ydata=pd.read_csv('data3y.csv')
+df_backtest=pd.read_csv(os.path.join("data",'backtest_bl.csv'))
+df_3ydata=pd.read_csv(os.path.join("data",'data3y.csv'))
 #sliders
 with col_droite:
     with st.container(border=True):
@@ -98,7 +99,7 @@ with col_droite:
 
 
     with st.container(border=True):
-        dfprice=pd.read_csv('data3y.csv')
+        dfprice=pd.read_csv(os.path.join("data",'data3y.csv'))
         df_corr = getCorrelationMatrix(dfprice,dfprice['Date'].iloc[-1],22*hist_param)
         fig_corr = px.imshow(
             df_corr,
@@ -143,7 +144,7 @@ with col_droite:
         import os
         import datetime
         st.write("**Refresh the data (auto refresh every day)**")
-        file_time = os.path.getmtime('data3y.csv')
+        file_time = os.path.getmtime(os.path.join("data",'data3y.csv'))
         last_date = datetime.datetime.fromtimestamp(file_time).strftime('%d/%m/%Y at %H:%M')
         st.caption(f"📅 Last update : **{last_date}**")
         if st.button("Get the new data !", width='stretch'):

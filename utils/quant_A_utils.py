@@ -21,6 +21,7 @@ def risk_free_rate_conversion(rate, freq):
         rf_adjusted = 0
     return rf_adjusted
 
+
 def calculate_strategy_returns(df, risk_free_rate, freq, transaction_cost):
     rf_adjusted = risk_free_rate_conversion(risk_free_rate, freq)
     df['Return'] = df['Close'].pct_change().replace(np.nan, 0)
@@ -160,14 +161,12 @@ def predict_prophet(df, periods=30, interval="1d"):
     m.fit(df_prophet)
 
     if interval == "1min":
-        # prédiction en minutes
         future = m.make_future_dataframe(
             periods=periods,
             freq="min",
             include_history=False
         )
     else:
-        # prédiction en jours
         future = m.make_future_dataframe(
             periods=periods,
             freq="D",
