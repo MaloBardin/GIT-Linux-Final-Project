@@ -7,7 +7,9 @@
 header[data-testid="stHeader"] {
   display: none;
 }
-
+header[data-testid="stSidebar"] {
+  display: none;
+}
 .ticker-wrap {
   width: 100%;
   background-color: #0e1117;
