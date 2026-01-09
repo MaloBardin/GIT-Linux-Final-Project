@@ -8,6 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import time
 from utils.mailsending import show_newsletter_popup
+from utils.mailsending import show_newsletter_popup
 from utils.utils import local_css, barre_menu
 import os
 
@@ -51,6 +52,7 @@ def show_bl_info():
     st.write("### 🚨 Attention, the views are computed by an momentum strategy on the historical data selected.")
     st.write("### ⚠️ Note: Running the backtest may take a few moments depending on the parameters chosen.")
 
+#header part of the page
 col_titre, col_info = st.columns([100, 5])
 
 with col_titre:
@@ -60,18 +62,26 @@ with col_titre:
         </h1>
     """, unsafe_allow_html=True)
 
+#the info button : explain the goal of the Black and Litterman model
 with col_info:
     st.write("")
     st.write("")
     if st.button("ℹ️", help="About the Black-Litterman Model"):
         show_bl_info()
 
+#split the page into two columns : graph on left and parameters on right
 col_gauche, col_droite = st.columns([3, 1], gap="medium")
 
 df_backtest=pd.read_csv(os.path.join("data",'backtest_bl.csv'))
 df_3ydata=pd.read_csv(os.path.join("data",'data3y.csv'))
 #sliders
+#load data
+df_backtest=pd.read_csv('backtest_bl.csv')
+df_3ydata=pd.read_csv('data3y.csv')
+
+
 with col_droite:
+    # sliders for backtesting
     with st.container(border=True):
         st.write("**Strategy parameters**")
         hold_param = st.slider("Holding time in months", min_value=1, max_value=12, value=1)
@@ -86,20 +96,20 @@ with col_droite:
         confidence_param=confidence_param/100
     status_placeholder = st.empty()
 
-
+    #run backtest button
     with st.container(border=False):
         if st.button("Run backtest", type="primary", width='stretch'):
             with st.spinner('⏳ Running backtest, please wait...'):
                 RunBacktest(hold_param, hist_param, numberviews_param, confidence_param,DynamicLambda)
                 st.success("✅ Backtest finished !")
                 import time
-                st.session_state.mes_actifs_key = []
+                st.session_state.mes_actifs_key = [] #to reset the multiselect
                 time.sleep(0.5)
                 st.rerun()
 
-
+    #correlation matrix and metrics
     with st.container(border=True):
-        dfprice=pd.read_csv(os.path.join("data",'data3y.csv'))
+        dfprice=df_3ydata
         df_corr = getCorrelationMatrix(dfprice,dfprice['Date'].iloc[-1],22*hist_param)
         fig_corr = px.imshow(
             df_corr,
@@ -117,18 +127,16 @@ with col_droite:
 
         st.plotly_chart(fig_corr, width="stretch")
 
-        #metrics infos
+        #risk metrics
         st.subheader("📉 Risk Metrics")
-
         # Calculs
         var_es_pf = calculate_historical_var_es(df_backtest, "Money", 0.99)
         sharpe_pf = calculate_sharpe_ratio(df_backtest, "Money", 0.03)
-
         var_es_spx = calculate_historical_var_es(df_backtest, "Cac40", 0.99)
         sharpe_spx = calculate_sharpe_ratio(df_backtest, "Cac40", 0.03)
 
+        #display
         col1, col2 = st.columns(2)
-
         with col1:
             st.markdown("#### 💼 Portfolio")
             st.metric("VaR 99%", f"{var_es_pf['VaR']:.2%}")
@@ -140,6 +148,8 @@ with col_droite:
             st.metric("VaR 99%", f"{var_es_spx['VaR']:.2%}")
             st.metric("ES 99%", f"{var_es_spx['ES']:.2%}")
             st.metric("Sharpe Ratio", f"{sharpe_spx:.2f}")
+
+    #refresh data button
     with st.container(border=True):
         import os
         import datetime
@@ -148,13 +158,13 @@ with col_droite:
         last_date = datetime.datetime.fromtimestamp(file_time).strftime('%d/%m/%Y at %H:%M')
         st.caption(f"📅 Last update : **{last_date}**")
         if st.button("Get the new data !", width='stretch'):
-            with st.spinner('⏳ Refreshing data, please wait...'):
+            with st.spinner("⏳ Refreshing data, please wait..."):
                 runEveryDay()
                 st.success("✅ Data refreshed !")
                 import time
                 time.sleep(0.1)
                 st.rerun()
-#graph
+
 with col_gauche:
     with st.container(border=True):
         oAssetColumns = [
@@ -163,7 +173,7 @@ with col_gauche:
     "HO.PA", "KER.PA", "LR.PA", "MC.PA", "ML.PA", "OR.PA", "ORA.PA", "PUB.PA",
     "RCO.PA", "RI.PA", "RMS.PA", "SAF.PA", "SAN.PA", "SGO.PA", "STMPA.PA",
     "SU.PA", "TEP.PA", "TTE.PA", "VIE.PA", "VIV.PA", "WLN.PA"]
-
+        #selection of assets
         selection = st.multiselect(
             "📈 Display components of the Cac40 (⚠️ this will not have an impact on the composition of the portfolio since everything is automated)",
             options=oAssetColumns,
@@ -171,7 +181,7 @@ with col_gauche:
             key = "mes_actifs_key"
         )
 
-
+    # graph for backtest
     with st.container(border=True):
         df_chart = getPrintableDf(df_backtest,df_3ydata,selection)
         fix = px.line(
@@ -186,7 +196,7 @@ with col_gauche:
 
         st.plotly_chart(fix, width="stretch")
 
-
+    #most buyed assets histogram
     with st.container(border=True):
         data_tuples = GetInfoOnBacktest(df_backtest)
         df_histo = pd.DataFrame(data_tuples, columns=["Actif", "Fréquence"])
@@ -209,6 +219,8 @@ with col_gauche:
         )
 
         st.plotly_chart(fig, width="stretch")
+
+    #annualized volatility graph
     with st.container(border=True):
         data_toplot=dailyvol(df_backtest)
         fig = px.line(data_toplot,
@@ -218,13 +230,16 @@ with col_gauche:
                       title="Annualized volatility")
 
         st.plotly_chart(fig, width="stretch")
+
+    #maximum drawdown graph
     with st.container(border=True):
         fig, mdd, start, end = plot_max_drawdown(df_backtest)
         st.plotly_chart(fig, width="stretch")
 
-        st.error(f"📉 **Maximum Drawdown :** {mdd:.2%}")
-        st.info(f"⏱️ **Drop and recovery duration :** {(end - start).days} days")
+        st.error(f"Maximum Drawdown : {mdd:.2%}")
+        st.info(f"Drop and recovery duration : {(end - start).days} days")
 
+#Multirun backtesting part
 st.divider()
 st.subheader("🔃 Multi-Run Simulation")
 with st.container(border=True):
@@ -237,7 +252,7 @@ with st.container(border=True):
     with col_btn:
         st.write("")
         st.write("")
-        start_multirun = st.button("🚀 Launch Multi-Run", type="primary")
+        start_multirun = st.button("Launch Multi-Run", type="primary")
 
     if start_multirun:
         my_bar = st.progress(0, text="Preparing simulations...")

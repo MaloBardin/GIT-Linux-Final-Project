@@ -6,8 +6,8 @@ import plotly.express as px
 from fredapi import Fred
 import warnings
 import yfinance as yf
+import streamlit as st
 from streamlit import columns
-
 warnings.filterwarnings("ignore")
 import streamlit as st
 import os
