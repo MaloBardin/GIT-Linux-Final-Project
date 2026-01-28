@@ -1,6 +1,6 @@
 # GIT Linux Final Project - Interactive Financial Dashboard of the Cac40
 
-LINK : http://20.160.99.10:8501/home_page
+LINK : http://20.160.99.10:8501/home_page ⚠️ Currently offline => Save trees 🌲
 
 This project is a **financial analytics and portfolio management web application** focused on the **CAC 40**, combining **market monitoring, quantitative analysis, and systematic portfolio construction**.  
 It is designed to provide both **high-level market insights** and **advanced quantitative tools** through an interactive interface.
